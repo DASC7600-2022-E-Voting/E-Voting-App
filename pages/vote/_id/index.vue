@@ -10,6 +10,9 @@
       <input v-model="voteOption" :disabled="!isVoter"></input>
       <v-btn :disabled="!isVoter" @click="onClickVote">Vote</v-btn>
     </div>
+    <div>
+      <v-btn :disabled="!isVoter" @click="onClickRefund">Refund</v-btn>
+    </div>
   </div>
 </template>
 
@@ -71,6 +74,18 @@ export default {
         const tx = await this.eVoteInstance.methods.castVote(
           encryptedVote, Idx, encryptedVoteProof.a, encryptedVoteProof.b, encryptedVoteProof.c,
         ).send({ from: this.getAddress });
+        console.log(tx);
+      } catch (error) {
+        console.error(error);
+        this.error = error;
+      }
+    },
+    async onClickRefund() {
+      try {
+        const current = await web3.eth.getBlockNumber()
+        const targetBlock = (await this.eVoteInstance.methods.finishTallyBlockNumber().call()).toNumber();
+        if (current < targetBlock) throw new Error(`Block ${targetBlock} not reached`);
+        const tx = await this.eVoteInstance.methods.refund().send({ from: this.getAddress });
         console.log(tx);
       } catch (error) {
         console.error(error);
