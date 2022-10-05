@@ -51,6 +51,7 @@
 </template>
 
 <script>
+import { contractAddress } from '~/constant/stub';
 import WalletStatus from '~/components/WalletStatus.vue';
 
 export default {
@@ -69,8 +70,13 @@ export default {
                 },
                 {
                     icon: "mdi-chart-bubble",
-                    title: "Inspire",
-                    to: "/inspire",
+                    title: "Setup",
+                    to: "/setup",
+                },
+                {
+                    icon: "mdi-chart-bubble",
+                    title: "Demo Vote",
+                    to: `/vote/${contractAddress.eVote}`,
                 },
             ],
             miniVariant: false,
