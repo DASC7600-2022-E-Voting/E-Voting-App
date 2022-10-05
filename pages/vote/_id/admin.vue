@@ -3,6 +3,10 @@
         <div v-if="error">{{ error }}</div>
         <div v-if="!isAdmin">Please use admin account {{ admin }}</div>
         <div>
+            <div>Key Progress: {{ keyProgress }}/3</div>
+            <v-btn :disabled="!isAdmin" @click="onClickSetKeys">Set verifier key</v-btn>
+        </div>
+        <div>
             <v-btn :disabled="!isAdmin" @click="onClickTally">Tally</v-btn>
         </div>
     </div>
@@ -10,8 +14,9 @@
 
 <script>
 import { mapGetters } from 'vuex';
-import { admin } from '~/constant/stub';
-import { getEVotingContract } from '~/contracts'
+import { getVerifierZKSNARKContract, getEVotingContract } from '~/contracts'
+import { admin, contractAddress } from '~/constant/stub'
+import { getVerificationKeys } from '~/helper/verificationKeys';
 
 export default {
     name: 'VoteAdminPage',
@@ -19,6 +24,7 @@ export default {
         return {
             admin,
             error: '',
+            keyProgress: 0,
             contractAddress: this.$route.params.id,
         }
     },
@@ -32,6 +38,30 @@ export default {
         },
     },
     methods: {
+        async onClickSetKeys() {
+            try {
+                // TODO: should not hardcode zksnark contract address
+                const verifierZKSNARKInstance = getVerifierZKSNARKContract(this.getWeb3(), contractAddress.verifierZKSNARK);
+                const vPubKey = await this.$axios.$get('./zk/verifier_PublicKey.json')
+                const verifierPublicKeyVkey = getVerificationKeys(vPubKey)
+                let tx = await verifierZKSNARKInstance.methods.setVerifyingKey(verifierPublicKeyVkey, 0).send({ from: this.getAddress });
+                console.log(tx);
+                this.keyProgress += 1;
+
+                const vEncrpytedVote = await this.$axios.$get('./zk/verifier_EncrpytedVote.json')
+                const verifierEncrpytedVoteVkey = getVerificationKeys(vEncrpytedVote)
+                tx = await verifierZKSNARKInstance.methods.setVerifyingKey(verifierEncrpytedVoteVkey, 1).send({ from: this.getAddress });
+                this.keyProgress += 1;
+
+                const vTallying = await this.$axios.$get('./zk/verifier_tallying.json')
+                const verifierTallyingVkey = getVerificationKeys(vTallying)
+                tx = await verifierZKSNARKInstance.methods.setVerifyingKey(verifierTallyingVkey, 2).send({ from: this.getAddress });
+                this.keyProgress += 1;
+            } catch (error) {
+                console.error(error);
+                this.error = error;
+            }
+        },
         async onClickTally() {
             try {
                 const tallyData = { voteOption: this.voteOption }; // TODO: generate zk proof
