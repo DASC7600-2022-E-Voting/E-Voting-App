@@ -2,8 +2,8 @@
     <div>
         <div v-if="error">{{ error }}</div>
         <div>Progress: {{ progress }}/3</div>
-        <div v-if="isNotAdmin">Please use admin account {{ admin }}</div>
-        <v-btn :disabled="isNotAdmin" @click="onClickSetKeys">Set verifier key</v-btn>
+        <div v-if="!isAdmin">Please use admin account {{ admin }}</div>
+        <v-btn :disabled="!isAdmin" @click="onClickSetKeys">Set verifier key</v-btn>
     </div>
 </template>
 
@@ -24,9 +24,9 @@ export default {
     },
     computed: {
         ...mapGetters('wallet', ['getAddress', 'getWeb3']),
-        isNotAdmin() {
-            return (!this.getAddress || !this.getAddress === admin)
-        }
+        isAdmin() {
+            return this.getAddress && this.getAddress.toLowerCase() === admin.toLowerCase();
+        },
     },
     methods: {
         async onClickSetKeys() {

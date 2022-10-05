@@ -17,7 +17,7 @@
     "@nuxtjs/axios": "^5.13.6",
     "circomlibjs": "^0.1.7",
     "core-js": "^3.25.3",
-    "ethereumjs-util": "^7.1.5",
+    "ethereumjs-util": "^5.1.4",
     "ffjavascript": "^0.2.56",
     "nuxt": "^2.15.8",
     "snarkjs": "^0.5.0",
