@@ -21,9 +21,9 @@
     "ffjavascript": "^0.2.56",
     "nuxt": "^2.15.8",
     "snarkjs": "^0.5.0",
-    "vue": "^2.7.10",
+    "vue": "^2.7.12",
     "vue-server-renderer": "^2.7.10",
-    "vue-template-compiler": "^2.7.10",
+    "vue-template-compiler": "^2.7.12",
     "vuetify": "^2.6.10",
     "web3": "^1.8.0"
   },
