@@ -8,8 +8,9 @@
             <v-btn :disabled="!isAdmin || keyProgress === 3" @click="onClickSetKeys">Set verifier key</v-btn>
         </div>
         <h2>Set tallying result</h2>
+        <div v-if="!isTallyingPhase">Is not tallying phase</div>
         <div>
-            <v-btn :disabled="!isAdmin" @click="onClickTally">Tally</v-btn>
+            <v-btn :disabled="!isAdmin || !isTallyingPhase" @click="onClickTally">Tally</v-btn>
         </div>
     </div>
 </template>
@@ -29,6 +30,9 @@ export default {
             eVotingContractAddress: this.$route.params.id,
             zkSNARKContractAddress: '',
             keys: [null, null, null],
+            currentBlock: 0,
+            finishVotingBlock: 0,
+            finishTallyBlock: 0,
         }
     },
     computed: {
@@ -44,6 +48,9 @@ export default {
         },
         keysIsEmpty() {
             return this.keys.map(k => !(k && k[0] && k[0][0] !== '0'));
+        },
+        isTallyingPhase() {
+            return this.currentBlock >= this.finishVotingBlock && this.currentBlock < this.finishTallyBlock;
         },
     },
     watch: {
@@ -63,6 +70,7 @@ export default {
             await Promise.all([
                 this.getAdmin(),
                 this.getVerifierContract(),
+                this.updateVotingPhases(),
             ]);
             await this.getVerifierKeys();
         },
@@ -77,11 +85,20 @@ export default {
         },
         async getVerifierKeys() {
             this.keys = await Promise.all(this.keys.map((k, index) => this.verifierZKSNARKInstance.methods.vk(index).call()));
-            console.log(this.keys);
             const keyIndex = this.keysIsEmpty.findIndex(k => k);
             if (keyIndex === -1) {
                 this.keyProgress = 3;
             }
+        },
+        async updateVotingPhases() {
+            const [currentBlock, finishVotingBlock, finishTallyBlock] = await Promise.all([
+                this.getWeb3().eth.getBlockNumber(),
+                this.eVoteInstance.methods.finishVotingBlockNumber().call(),
+                this.eVoteInstance.methods.finishTallyBlockNumber().call(),
+            ]);
+            this.currentBlock = currentBlock;
+            this.finishVotingBlock = Number(finishVotingBlock);
+            this.finishTallyBlock = Number(finishTallyBlock);
         },
         async onClickSetKeys() {
             try {
@@ -103,7 +120,7 @@ export default {
                     this.keyProgress += 1;
                 }
 
-                if (this.keyProgress === 1) {
+                if (this.keyProgress === 2) {
                     const vTallying = await this.$axios.$get('./zk/verifier_tallying.json')
                     const verifierTallyingVkey = getVerificationKeys(vTallying)
                     const tx = await verifierZKSNARKInstance.methods.setVerifyingKey(verifierTallyingVkey, 2).send({ from: this.getAddress });
