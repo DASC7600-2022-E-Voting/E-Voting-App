@@ -70,7 +70,7 @@ export default {
                 },
                 {
                     icon: "mdi-chart-bubble",
-                    title: "Setup",
+                    title: "New Vote",
                     to: "/setup",
                 },
                 {

@@ -7,7 +7,5 @@ export const voters = [
 ];
 
 export const contractAddress = {
-    verifierMerkleTree: '0xB69f02a7cD10ce92dEd28613a11A5167e8De500c',
-    verifierZKSNARK: '0x6489793843b80372083da7Af3298170c0C7879ae',
     eVote: '0xBC0A7d04161D7269E888ccAc2A7F2dd95ff2387A',
 }
