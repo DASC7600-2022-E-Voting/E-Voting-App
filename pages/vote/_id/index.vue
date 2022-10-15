@@ -67,6 +67,8 @@ export default {
       tallyEndTime: new Date(0),
 
       nVoters: voters.length,
+      registeredVoters: [],
+      votedVoters: [],
       voteResult: -1,
 
       voteOption: 0,
@@ -118,6 +120,7 @@ export default {
   methods: {
     async init() {
       await Promise.all([
+        this.getRegisteredAndVotedVoters(),
         this.getTally(),
         this.updateVotingPhases(),
       ]);
@@ -127,6 +130,27 @@ export default {
         this.voteResult = await this.eVoteInstance.methods.voteResult().call();
       } catch (err) {
         this.voteResult = -1;
+      }
+    },
+    async getRegisteredAndVotedVoters() {
+      const nVoters = await this.eVoteInstance.methods.nVoters().call();
+      this.nVoters = nVoters;
+      for (let i = 0; i < nVoters; i += 1) {
+        try {
+          const address = await this.eVoteInstance.methods.voters(i).call();
+          this.registeredVoters.push(address);
+        } catch (err) {
+          break;
+        }
+      }
+      for (let i = 0; i < this.registeredVoters.length; i += 1) {
+        const address = this.registeredVoters[i];
+        try {
+          await this.eVoteInstance.methods.encryptedVotes(address).call();
+          this.votedVoters.push(address);
+        } catch (err) {
+          break;
+        }
       }
     },
     async updateVotingPhases() {
