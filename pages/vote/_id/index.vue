@@ -1,8 +1,19 @@
 <template>
   <div>
     <div v-if="error">{{ error }}</div>
-    <div v-if="!getAddress">Please connect your wallet first</div>
+    <div>
+      <h2>Voting Status</h2>
+      <div>Voters Expected: {{ nVoters }}</div>
+      <div>Voters Registered: {{ registeredVoters.length }}</div>
+      <div>Voters Voted: {{ votedVoters.length }}</div>
+      <div>Tally Result: {{ voteResultDisplay }}</div>
+    </div>
+    <div v-if="!getAddress">
+      <h2>Voting actions</h2>
+      Please connect your wallet first
+    </div>
     <div v-else>
+      <h2>Voting actions</h2>
       <div v-if="!isVoter">You are not voter!</div>
       <hr />
       <div>
@@ -46,6 +57,7 @@ export default {
       error: '',
       contractAddress: this.$route.params.id,
       usersMerkleTree: new MerkleTree(voters), // TODO: not hardcode voter
+
       currentBlock: 0,
       finishRegistartionBlock: 0,
       finishVotingBlock: 0,
@@ -53,6 +65,10 @@ export default {
       registrationEndTime: new Date(0),
       votingEndTime: new Date(0),
       tallyEndTime: new Date(0),
+
+      nVoters: voters.length,
+      voteResult: -1,
+
       voteOption: 0,
       voterData: {}, // TODO: fill in zk info
     }
@@ -80,6 +96,12 @@ export default {
     isRefundPhase() {
       return this.currentBlock >= this.finishTallyBlock;
     },
+    voteResultDisplay() {
+      if (this.voteResult === -1) return 'No Result';
+      if (this.voteResult > this.nVoters/2) return 'Yes';
+      if (this.voteResult < this.nVoters/2) return 'No';
+      return 'Draw';
+    },
   },
   watch: {
     getAddress(address) {
@@ -96,8 +118,16 @@ export default {
   methods: {
     async init() {
       await Promise.all([
+        this.getTally(),
         this.updateVotingPhases(),
       ]);
+    },
+    async getTally() {
+      try {
+        this.voteResult = await this.eVoteInstance.methods.voteResult().call();
+      } catch (err) {
+        this.voteResult = -1;
+      }
     },
     async updateVotingPhases() {
       const [currentBlock, finishRegistartionBlock, finishVotingBlock, finishTallyBlock] = await Promise.all([
