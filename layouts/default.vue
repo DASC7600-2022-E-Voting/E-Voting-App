@@ -78,11 +78,6 @@ export default {
                     title: "Demo Vote",
                     to: `/vote/${contractAddress.eVote}`,
                 },
-                {
-                    icon: "mdi-chart-bubble",
-                    title: "Demo Vote Tally",
-                    to: `/vote/${contractAddress.eVote}/admin`,
-                },
             ],
             miniVariant: false,
             title: "Vuetify.js",

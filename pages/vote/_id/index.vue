@@ -39,6 +39,10 @@
         <v-btn :disabled="!isVoter || !isRefundPhase" @click="onClickRefund">Refund</v-btn>
       </div>
     </div>
+    <div>
+      <h2>Admin page</h2>
+      <nuxt-link :to="`/vote/${contractAddress}/admin`">Go to admin link</nuxt-link>
+    </div>
   </div>
 </template>
 
