@@ -1,17 +1,32 @@
 <template>
   <div>
     <div v-if="error">{{ error }}</div>
-    <div v-if="!isVoter">You are not voter!</div>
-    <div>
-      <v-btn :disabled="!isVoter" @click="onClickRegister">Register</v-btn>
-    </div>
-    <div>
-      <label>Vote option:</label>
-      <input v-model="voteOption" :disabled="!isVoter"></input>
-      <v-btn :disabled="!isVoter" @click="onClickVote">Vote</v-btn>
-    </div>
-    <div>
-      <v-btn :disabled="!isVoter" @click="onClickRefund">Refund</v-btn>
+    <div v-if="!getAddress">Please connect your wallet first</div>
+    <div v-else>
+      <div v-if="!isVoter">You are not voter!</div>
+      <hr />
+      <div>
+        <div>Registration end time: {{ registrationEndTime }}</div>
+        <div v-if="isRegisterPhase">Please Register as voter</div>
+        <div v-else>Is not register phase</div>
+        <v-btn :disabled="!isVoter || !isRegisterPhase" @click="onClickRegister">Register</v-btn>
+      </div>
+      <hr />
+      <div>
+        <div>voting end time: {{ votingEndTime }}</div>
+        <div v-if="isVotingPhase">Please Vote</div>
+        <div v-else>Is not voting phase</div>
+        <label>Vote option:</label>
+        <v-textfield type="number" v-model="voteOption" :disabled="!isVoter" />
+        <v-btn :disabled="!isVoter || !isVotingPhase" @click="onClickVote">Vote</v-btn>
+      </div>
+      <hr />
+      <div>
+        <div>refund start time: {{ tallyEndTime }}</div>
+        <div v-if="isRefundPhase">Please refund here</div>
+        <div v-else>Is not refund phase</div>
+        <v-btn :disabled="!isVoter || !isRefundPhase" @click="onClickRefund">Refund</v-btn>
+      </div>
     </div>
   </div>
 </template>
@@ -31,6 +46,13 @@ export default {
       error: '',
       contractAddress: this.$route.params.id,
       usersMerkleTree: new MerkleTree(voters), // TODO: not hardcode voter
+      currentBlock: 0,
+      finishRegistartionBlock: 0,
+      finishVotingBlock: 0,
+      finishTallyBlock: 0,
+      registrationEndTime: new Date(0),
+      votingEndTime: new Date(0),
+      tallyEndTime: new Date(0),
       voteOption: 0,
       voterData: {}, // TODO: fill in zk info
     }
@@ -46,8 +68,52 @@ export default {
     userMerkleProof() {
       return this.getAddress && this.usersMerkleTree.getHexProof(this.getAddress);
     },
+    isRegisterPhase() {
+      return this.currentBlock < this.finishRegistartionBlock;
+    },
+    isVotingPhase() {
+      return this.currentBlock >= this.finishRegistartionBlock && this.currentBlock < this.finishVotingBlock;
+    },
+    isTallyingPhase() {
+      return this.currentBlock >= this.finishVotingBlock && this.currentBlock < this.finishTallyBlock;
+    },
+    isRefundPhase() {
+      return this.currentBlock >= this.finishTallyBlock;
+    },
+  },
+  watch: {
+    getAddress(address) {
+      if (address) {
+        this.init();
+      }
+    },
+  },
+  mounted() {
+    if (this.getAddress) {
+      this.init()
+    }
   },
   methods: {
+    async init() {
+      await Promise.all([
+        this.updateVotingPhases(),
+      ]);
+    },
+    async updateVotingPhases() {
+      const [currentBlock, finishRegistartionBlock, finishVotingBlock, finishTallyBlock] = await Promise.all([
+        this.getWeb3().eth.getBlockNumber(),
+        this.eVoteInstance.methods.finishRegistartionBlockNumber().call(),
+        this.eVoteInstance.methods.finishVotingBlockNumber().call(),
+        this.eVoteInstance.methods.finishTallyBlockNumber().call(),
+      ]);
+      this.currentBlock = currentBlock;
+      this.finishRegistartionBlock = Number(finishRegistartionBlock);
+      this.finishVotingBlock = Number(finishVotingBlock);
+      this.finishTallyBlock = Number(finishTallyBlock);
+      this.registrationEndTime = new Date(currentBlock > this.finishRegistartionBlock ? (await this.getWeb3().eth.getBlock(this.finishRegistartionBlock)).timestamp * 1000 : Date.now() + (this.finishRegistartionBlock - currentBlock) * 12000);
+      this.votingEndTime = new Date(currentBlock > this.finishVotingBlock ? (await this.getWeb3().eth.getBlock(this.finishVotingBlock)).timestamp * 1000 : Date.now() + (this.finishVotingBlock - currentBlock) * 12000);
+      this.tallyEndTime = new Date(currentBlock > this.finishTallyBlock ? (await this.getWeb3().eth.getBlock(this.finishTallyBlock)).timestamp * 1000 : Date.now() + (this.finishTallyBlock - currentBlock) * 12000);
+    },
     async onClickRegister() {
       try {
         const {
