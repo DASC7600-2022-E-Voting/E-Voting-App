@@ -15,33 +15,58 @@
 <script>
 import { mapGetters } from 'vuex';
 import { getVerifierZKSNARKContract, getEVotingContract } from '~/contracts'
-import { admin, contractAddress } from '~/constant/stub'
 import { getVerificationKeys } from '~/helper/verificationKeys';
 
 export default {
     name: 'VoteAdminPage',
     data() {
         return {
-            admin,
+            admin: '',
             error: '',
             keyProgress: 0,
-            contractAddress: this.$route.params.id,
+            eVotingContractAddress: this.$route.params.id,
+            zkSNARKContractAddress: '',
         }
     },
     computed: {
         ...mapGetters('wallet', ['getAddress', 'getWeb3']),
         isAdmin() {
-            return this.getAddress && this.getAddress.toLowerCase() === admin.toLowerCase();
+            return this.admin && this.getAddress && this.getAddress.toLowerCase() === this.admin.toLowerCase();
         },
         eVoteInstance() {
-            return this.getAddress ? getEVotingContract(this.getWeb3(), this.contractAddress) : null;
+            return this.getAddress ? getEVotingContract(this.getWeb3(), this.eVotingContractAddress) : null;
         },
     },
+    watch: {
+        getAddress(address) {
+            if (address) {
+                this.getAdmin();
+                this.getVerifierContract();
+            }
+        },
+    },
+    mounted() {
+        if (this.getAddress) {
+            this.getAdmin();
+            this.getVerifierContract();
+        }
+    },
     methods: {
+        async getAdmin() {
+            const address = await this.eVoteInstance.methods.admin().call();
+            console.log(address);
+            if (address) this.admin = address;
+        },
+        async getVerifierContract() {
+            const vzkSNARK = await this.getWeb3().eth.getStorageAt(this.eVotingContractAddress, 1);
+            const address = await this.getWeb3().eth.abi.decodeParameters(['address'], vzkSNARK);
+            console.log(address[0]);
+            if (address && address[0]) this.zkSNARKContractAddress = address[0];
+        },
         async onClickSetKeys() {
             try {
-                // TODO: should not hardcode zksnark contract address
-                const verifierZKSNARKInstance = getVerifierZKSNARKContract(this.getWeb3(), contractAddress.verifierZKSNARK);
+                if (!this.zkSNARKContractAddress) return;
+                const verifierZKSNARKInstance = getVerifierZKSNARKContract(this.getWeb3(), this.zkSNARKContractAddress);
                 const vPubKey = await this.$axios.$get('./zk/verifier_PublicKey.json')
                 const verifierPublicKeyVkey = getVerificationKeys(vPubKey)
                 let tx = await verifierZKSNARKInstance.methods.setVerifyingKey(verifierPublicKeyVkey, 0).send({ from: this.getAddress });
