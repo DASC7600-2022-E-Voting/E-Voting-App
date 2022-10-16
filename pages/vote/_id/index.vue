@@ -28,7 +28,7 @@
         <div v-if="isVotingPhase">Please Vote</div>
         <div v-else>Is not voting phase</div>
         <label>Vote option:</label>
-        <v-textfield type="number" v-model="voteOption" :disabled="!isVoter" />
+        <v-text-field v-model="voteOption" type="number" :disabled="!isVoter" />
         <v-btn :disabled="!isVoter || !isVotingPhase" @click="onClickVote">Vote</v-btn>
       </div>
       <hr />
@@ -104,8 +104,8 @@ export default {
     },
     voteResultDisplay() {
       if (this.voteResult === -1) return 'No Result';
-      if (this.voteResult > this.nVoters/2) return 'Yes';
-      if (this.voteResult < this.nVoters/2) return 'No';
+      if (this.voteResult > this.nVoters / 2) return 'Yes';
+      if (this.voteResult < this.nVoters / 2) return 'No';
       return 'Draw';
     },
   },

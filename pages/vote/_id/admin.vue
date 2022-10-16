@@ -2,15 +2,22 @@
     <div>
         <div v-if="error">{{ error }}</div>
         <div v-if="!isAdmin">Please use admin account {{ admin }}</div>
-        <h2>Set ZK Verification keys</h2>
         <div>
+            <h2>Set ZK Verification keys</h2>
             <div>Key Progress: {{ keyProgress }}/3</div>
             <v-btn :disabled="!isAdmin || keyProgress === 3" @click="onClickSetKeys">Set verifier key</v-btn>
         </div>
-        <h2>Set tallying result</h2>
-        <div v-if="!isTallyingPhase">Is not tallying phase</div>
         <div>
-            <v-btn :disabled="!isAdmin || !isTallyingPhase" @click="onClickTally">Tally</v-btn>
+            <h2>Set tallying result</h2>
+            <div v-if="!isTallyingPhase">Is not tallying phase</div>
+            <div>
+                <v-btn :disabled="!isAdmin || !isTallyingPhase" @click="onClickTally">Tally</v-btn>
+            </div>
+        </div>
+        <div>
+            <h2>Set tallying result</h2>
+            <div v-if="!isRefundPhase">Is not refund phase</div>
+            <v-btn :disabled="!isAdmin || !isRefundPhase" @click="onClickRefund">Refund</v-btn>
         </div>
         <div>
             <nuxt-link :to="`/vote/${eVotingContractAddress}`">Back to voting page</nuxt-link>
@@ -54,6 +61,9 @@ export default {
         },
         isTallyingPhase() {
             return this.currentBlock >= this.finishVotingBlock && this.currentBlock < this.finishTallyBlock;
+        },
+        isRefundPhase() {
+            return this.currentBlock >= this.finishTallyBlock;
         },
     },
     watch: {
@@ -145,6 +155,15 @@ export default {
                 const tx = await this.eVoteInstance.methods.setTally(
                     tallyingResult, tallyingProof.a, tallyingProof.b, tallyingProof.c
                 ).send({ from: this.getAddress });
+                console.log(tx);
+            } catch (error) {
+                console.error(error);
+                this.error = error;
+            }
+        },
+        async onClickRefund() {
+            try {
+                const tx = await this.eVoteInstance.methods.refund().send({ from: this.getAddress });
                 console.log(tx);
             } catch (error) {
                 console.error(error);
