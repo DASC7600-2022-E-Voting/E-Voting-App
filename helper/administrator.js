@@ -1,6 +1,6 @@
 const { FullProve } = require('./snarkjsHelper')
-const tallyingWasm = "zk/tallying_js/tallying.wasm";
-const tallyingZkey = "zk/tallyingFinal.zkey";
+const tallyingWasm = "/zk/tallying_js/tallying.wasm";
+const tallyingZkey = "/zk/tallyingFinal.zkey";
 
 
 export async function tallying(encryptedVotes) {

@@ -50,6 +50,7 @@
 import { mapGetters } from 'vuex';
 import web3 from 'web3';
 import { MerkleTree } from '~/helper/merkleTree';
+import { genPublicKeysAndProof, genEncryptedVotesAndProofs } from '~/helper/voters';
 import { voters } from '~/constant/stub'
 import { DEPOSIT_VALUE } from '~/constant';
 import { getEVotingContract } from '~/contracts'
@@ -60,7 +61,9 @@ export default {
     return {
       error: '',
       contractAddress: this.$route.params.id,
-      usersMerkleTree: new MerkleTree(voters), // TODO: not hardcode voter
+
+      voters,
+      usersMerkleTree: new MerkleTree(voters), // TODO: not hardcode voters
 
       currentBlock: 0,
       finishRegistartionBlock: 0,
@@ -73,10 +76,11 @@ export default {
       nVoters: voters.length,
       registeredVoters: [],
       votedVoters: [],
+      votingKeysX: [],
+      votingKeysY: [],
       voteResult: -1,
 
       voteOption: 0,
-      voterData: {}, // TODO: fill in zk info
     }
   },
   computed: {
@@ -143,6 +147,13 @@ export default {
         try {
           const address = await this.eVoteInstance.methods.voters(i).call();
           this.registeredVoters.push(address);
+          console.log(address);
+          const publicKeyX = await this.eVoteInstance.methods.publicKeys(address, 0).call();
+          const publicKeyY = await this.eVoteInstance.methods.publicKeys(address, 1).call();
+          console.log(publicKeyX);
+          console.log(publicKeyY);
+          this.votingKeysX.push(publicKeyX);
+          this.votingKeysY.push(publicKeyY);
         } catch (err) {
           break;
         }
@@ -175,9 +186,9 @@ export default {
     async onClickRegister() {
       try {
         const {
-          publicKey = [],
-          publicKeyProof = { a: [1, 2], b: [[3, 4], [5, 6]], c: [5, 6] },
-        } = this.voterData;
+          publicKey,
+          publicKeyProof,
+        } = await genPublicKeysAndProof(this.voters.findIndex(v => v.toLowerCase() === this.getAddress.toLowerCase()));
         const tx = await this.eVoteInstance.methods.register(
           publicKey, publicKeyProof.a, publicKeyProof.b, publicKeyProof.c, this.userMerkleProof,
         ).send({ from: this.getAddress, value: web3.utils.toWei(DEPOSIT_VALUE, "ether") });
@@ -189,12 +200,17 @@ export default {
     },
     async onClickVote() {
       try {
-        const voteData = { voteOption: this.voteOption }; // TODO: generate zk proof
         const {
-          encryptedVote = [1, 2],
-          Idx = '1',
-          encryptedVoteProof = { a: [1, 2], b: [[3, 4], [5, 6]], c: [5, 6] },
-        } = voteData;
+          privateKey,
+        } = await genPublicKeysAndProof(this.voters.findIndex(v => v.toLowerCase() === this.getAddress.toLowerCase()));
+        const Idx = this.registeredVoters.findIndex(v => v.toLowerCase() === this.getAddress.toLowerCase());
+        const { encryptedVote, encryptedVoteProof } = await genEncryptedVotesAndProofs({
+          privateKey,
+          Idx,
+          vote: this.voteOption,
+          VotingKeysX: this.votingKeysX,
+          VotingKeysY: this.votingKeysY,
+        });
         const tx = await this.eVoteInstance.methods.castVote(
           encryptedVote, Idx, encryptedVoteProof.a, encryptedVoteProof.b, encryptedVoteProof.c,
         ).send({ from: this.getAddress });
@@ -206,9 +222,6 @@ export default {
     },
     async onClickRefund() {
       try {
-        const current = await web3.eth.getBlockNumber()
-        const targetBlock = (await this.eVoteInstance.methods.finishTallyBlockNumber().call()).toNumber();
-        if (current < targetBlock) throw new Error(`Block ${targetBlock} not reached`);
         const tx = await this.eVoteInstance.methods.refund().send({ from: this.getAddress });
         console.log(tx);
       } catch (error) {
