@@ -78,6 +78,7 @@ export default {
       votedVoters: [],
       votingKeysX: [],
       votingKeysY: [],
+      encryptedVotes: [],
       voteResult: -1,
 
       voteOption: 0,
@@ -161,9 +162,12 @@ export default {
       for (let i = 0; i < this.registeredVoters.length; i += 1) {
         const address = this.registeredVoters[i];
         try {
-          await this.eVoteInstance.methods.encryptedVotes(address).call();
+          const voteX = await this.eVoteInstance.methods.encryptedVotes(address, 0).call();
+          const voteY = await this.eVoteInstance.methods.encryptedVotes(address, 1).call();
           this.votedVoters.push(address);
+          this.encryptedVotes.push([voteX, voteY]);
         } catch (err) {
+          console.error(err);
           break;
         }
       }

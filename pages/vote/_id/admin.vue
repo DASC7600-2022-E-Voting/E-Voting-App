@@ -29,6 +29,8 @@
 import { mapGetters } from 'vuex';
 import { getVerifierZKSNARKContract, getEVotingContract } from '~/contracts'
 import { getVerificationKeys } from '~/helper/verificationKeys';
+import { tallying } from '~/helper/administrator';
+import { voters } from '~/constant/stub'
 
 export default {
     name: 'VoteAdminPage',
@@ -43,6 +45,13 @@ export default {
             currentBlock: 0,
             finishVotingBlock: 0,
             finishTallyBlock: 0,
+
+            nVoters: voters.length,
+            registeredVoters: [],
+            votedVoters: [],
+            votingKeysX: [],
+            votingKeysY: [],
+            encryptedVotes: [],
         }
     },
     computed: {
@@ -84,6 +93,7 @@ export default {
                 this.getAdmin(),
                 this.getVerifierContract(),
                 this.updateVotingPhases(),
+                this.getRegisteredAndVotedVoters(),
             ]);
             await this.getVerifierKeys();
         },
@@ -112,6 +122,34 @@ export default {
             this.currentBlock = currentBlock;
             this.finishVotingBlock = Number(finishVotingBlock);
             this.finishTallyBlock = Number(finishTallyBlock);
+        },
+        async getRegisteredAndVotedVoters() {
+            const nVoters = await this.eVoteInstance.methods.nVoters().call();
+            this.nVoters = nVoters;
+            for (let i = 0; i < nVoters; i += 1) {
+                try {
+                    const address = await this.eVoteInstance.methods.voters(i).call();
+                    this.registeredVoters.push(address);
+                    const publicKeyX = await this.eVoteInstance.methods.publicKeys(address, 0).call();
+                    const publicKeyY = await this.eVoteInstance.methods.publicKeys(address, 1).call();
+                    this.votingKeysX.push(publicKeyX);
+                    this.votingKeysY.push(publicKeyY);
+                } catch (err) {
+                    break;
+                }
+            }
+            for (let i = 0; i < this.registeredVoters.length; i += 1) {
+                const address = this.registeredVoters[i];
+                try {
+                    const voteX = await this.eVoteInstance.methods.encryptedVotes(address, 0).call();
+                    const voteY = await this.eVoteInstance.methods.encryptedVotes(address, 1).call();
+                    this.votedVoters.push(address);
+                    this.encryptedVotes.push([voteX, voteY]);
+                } catch (err) {
+                    console.error(err);
+                    break;
+                }
+            }
         },
         async onClickSetKeys() {
             try {
@@ -147,11 +185,7 @@ export default {
         },
         async onClickTally() {
             try {
-                const tallyData = { voteOption: this.voteOption }; // TODO: generate zk proof
-                const {
-                    tallyingResult = [1, 2],
-                    tallyingProof = { a: [1, 2], b: [[3, 4], [5, 6]], c: [5, 6] },
-                } = tallyData;
+                const { tallyingProof, tallyingResult } = await tallying(this.encryptedVotes)
                 const tx = await this.eVoteInstance.methods.setTally(
                     tallyingResult, tallyingProof.a, tallyingProof.b, tallyingProof.c
                 ).send({ from: this.getAddress });
