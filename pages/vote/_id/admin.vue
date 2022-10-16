@@ -13,7 +13,7 @@
             <v-btn :disabled="!isAdmin || !isTallyingPhase" @click="onClickTally">Tally</v-btn>
         </div>
         <div>
-            <nuxt-link :to="`/vote/${contractAddress}`">Back to voting page</nuxt-link>
+            <nuxt-link :to="`/vote/${eVotingContractAddress}`">Back to voting page</nuxt-link>
         </div>
     </div>
 </template>
