@@ -41,7 +41,7 @@ import {
     newVerifierMerkleTreeContract,
     newVerifierZKSNARKContract,
 } from '~/contracts';
-import { MerkleTree } from '~/helper/merkleTree';
+import { MerkleTree } from '~/helper/merkletree';
 import { voters } from '~/constant/stub';
 import { DEPOSIT_VALUE } from '~/constant';
 

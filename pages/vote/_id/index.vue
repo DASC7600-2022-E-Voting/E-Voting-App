@@ -49,7 +49,7 @@
 <script>
 import { mapGetters } from 'vuex';
 import web3 from 'web3';
-import { MerkleTree } from '~/helper/merkleTree';
+import { MerkleTree } from '~/helper/merkletree';
 import { genPublicKeysAndProof, genEncryptedVotesAndProofs } from '~/helper/voters';
 import { voters } from '~/constant/stub'
 import { DEPOSIT_VALUE } from '~/constant';
