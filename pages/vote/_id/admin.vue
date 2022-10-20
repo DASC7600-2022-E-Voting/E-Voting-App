@@ -1,23 +1,25 @@
 <template>
     <div>
         <div v-if="error">{{ error }}</div>
+        <div v-if="isLoading">Loading...</div>
         <div v-if="!isAdmin">Please use admin account {{ admin }}</div>
         <div>
             <h2>Set ZK Verification keys</h2>
             <div>Key Progress: {{ keyProgress }}/3</div>
-            <v-btn :disabled="!isAdmin || keyProgress === 3" @click="onClickSetKeys">Set verifier key</v-btn>
+            <v-btn :disabled="!isAdmin || keyProgress === 3 || isLoading" @click="onClickSetKeys">Set verifier key
+            </v-btn>
         </div>
         <div>
             <h2>Set tallying result</h2>
             <div v-if="!isTallyingPhase">Is not tallying phase</div>
             <div>
-                <v-btn :disabled="!isAdmin || !isTallyingPhase" @click="onClickTally">Tally</v-btn>
+                <v-btn :disabled="!isAdmin || !isTallyingPhase || isLoading" @click="onClickTally">Tally</v-btn>
             </div>
         </div>
         <div>
             <h2>Set tallying result</h2>
             <div v-if="!isRefundPhase">Is not refund phase</div>
-            <v-btn :disabled="!isAdmin || !isRefundPhase" @click="onClickRefund">Refund</v-btn>
+            <v-btn :disabled="!isAdmin || !isRefundPhase || isLoading" @click="onClickRefund">Refund</v-btn>
         </div>
         <div>
             <nuxt-link :to="`/vote/${eVotingContractAddress}`">Back to voting page</nuxt-link>
@@ -38,6 +40,7 @@ export default {
         return {
             admin: '',
             error: '',
+            isLoading: false,
             keyProgress: 0,
             eVotingContractAddress: this.$route.params.id,
             zkSNARKContractAddress: '',
@@ -151,36 +154,46 @@ export default {
                 }
             }
         },
+        async downloadAndSetKey(path, index) {
+            if (!this.verifierZKSNARKInstance) return;
+            const keyfile = await this.$axios.$get(path)
+            const key = getVerificationKeys(keyfile)
+            const tx = await this.verifierZKSNARKInstance.methods.setVerifyingKey(key, index).send({ from: this.getAddress });
+            return tx;
+        },
         async onClickSetKeys() {
             try {
                 if (!this.zkSNARKContractAddress) return;
-                const verifierZKSNARKInstance = this.verifierZKSNARKInstance;
+                const promises = [];
+                this.isLoading = true;
                 if (this.keyProgress === 0) {
-                    const vPubKey = await this.$axios.$get('./zk/verifier_PublicKey.json')
-                    const verifierPublicKeyVkey = getVerificationKeys(vPubKey)
-                    const tx = await verifierZKSNARKInstance.methods.setVerifyingKey(verifierPublicKeyVkey, 0).send({ from: this.getAddress });
-                    console.log(tx);
-                    this.keyProgress += 1;
+                    promises.push(this.downloadAndSetKey('./zk/verifier_PublicKey.json', 0)
+                        .then(() => {
+                            this.keyProgress += 1;
+                        })
+                    );
                 }
-
                 if (this.keyProgress === 1) {
-                    const vEncrpytedVote = await this.$axios.$get('./zk/verifier_EncrpytedVote.json')
-                    const verifierEncrpytedVoteVkey = getVerificationKeys(vEncrpytedVote)
-                    const tx = await verifierZKSNARKInstance.methods.setVerifyingKey(verifierEncrpytedVoteVkey, 1).send({ from: this.getAddress });
-                    console.log(tx);
-                    this.keyProgress += 1;
+                    promises.push(this.downloadAndSetKey('./zk/verifier_EncrpytedVote.json', 1)
+                        .then(() => {
+                            this.keyProgress += 1;
+                        })
+                    );
                 }
 
                 if (this.keyProgress === 2) {
-                    const vTallying = await this.$axios.$get('./zk/verifier_tallying.json')
-                    const verifierTallyingVkey = getVerificationKeys(vTallying)
-                    const tx = await verifierZKSNARKInstance.methods.setVerifyingKey(verifierTallyingVkey, 2).send({ from: this.getAddress });
-                    console.log(tx);
-                    this.keyProgress += 1;
+                    promises.push(this.downloadAndSetKey('./zk/verifier_tallying.json', 2)
+                        .then(() => {
+                            this.keyProgress += 1;
+                        })
+                    );
                 }
+                await Promise.all(promises);
             } catch (error) {
                 console.error(error);
                 this.error = error;
+            } finally {
+                this.isLoading = false;
             }
         },
         async onClickTally() {
