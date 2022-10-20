@@ -1,5 +1,7 @@
 <template>
     <div>
+        <div v-if="error">{{ error }}</div>
+        <div v-if="isLoading">Loading...</div>
         <div>
             <div>
                 <label>Voter list:</label>
@@ -27,8 +29,7 @@
                         Vote admin page
                     </nuxt-link>
                 </div>
-                <div v-if="isLoading">Loading...</div>
-                <v-btn v-else :disabled="!getAddress" @click="deploy">Create</v-btn>
+                <v-btn v-else :disabled="!getAddress || Loading" @click="deploy">Create</v-btn>
             </div>
         </div>
     </div>

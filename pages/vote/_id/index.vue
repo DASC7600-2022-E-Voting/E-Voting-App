@@ -1,6 +1,7 @@
 <template>
   <div>
     <div v-if="error">{{ error }}</div>
+    <div v-if="isLoading">Loading...</div>
     <div>
       <h2>Voting Status</h2>
       <div>Voters Expected: {{ nVoters }}</div>
@@ -20,7 +21,7 @@
         <div>Registration end time: {{ registrationEndTime }}</div>
         <div v-if="isRegisterPhase">Please Register as voter</div>
         <div v-else>Is not register phase</div>
-        <v-btn :disabled="!isVoter || !isRegisterPhase" @click="onClickRegister">Register</v-btn>
+        <v-btn :disabled="!isVoter || !isRegisterPhase || isLoading" @click="onClickRegister">Register</v-btn>
       </div>
       <hr />
       <div>
@@ -29,14 +30,14 @@
         <div v-else>Is not voting phase</div>
         <label>Vote option:</label>
         <v-text-field v-model="voteOption" type="number" :disabled="!isVoter" />
-        <v-btn :disabled="!isVoter || !isVotingPhase" @click="onClickVote">Vote</v-btn>
+        <v-btn :disabled="!isVoter || !isVotingPhase || isLoading" @click="onClickVote">Vote</v-btn>
       </div>
       <hr />
       <div>
         <div>refund start time: {{ tallyEndTime }}</div>
         <div v-if="isRefundPhase">Please refund here</div>
         <div v-else>Is not refund phase</div>
-        <v-btn :disabled="!isVoter || !isRefundPhase" @click="onClickRefund">Refund</v-btn>
+        <v-btn :disabled="!isVoter || !isRefundPhase || isLoading" @click="onClickRefund">Refund</v-btn>
       </div>
     </div>
     <div>
@@ -189,6 +190,7 @@ export default {
     },
     async onClickRegister() {
       try {
+        this.isLoading = true;
         const {
           publicKey,
           publicKeyProof,
@@ -200,10 +202,13 @@ export default {
       } catch (error) {
         console.error(error);
         this.error = error;
+      } finally {
+        this.isLoading = false;
       }
     },
     async onClickVote() {
       try {
+        this.isLoading = true;
         const {
           privateKey,
         } = await genPublicKeysAndProof(this.voters.findIndex(v => v.toLowerCase() === this.getAddress.toLowerCase()));
@@ -222,15 +227,20 @@ export default {
       } catch (error) {
         console.error(error);
         this.error = error;
+      } finally {
+        this.isLoading = false;
       }
     },
     async onClickRefund() {
       try {
+        this.isLoading = true;
         const tx = await this.eVoteInstance.methods.refund().send({ from: this.getAddress });
         console.log(tx);
       } catch (error) {
         console.error(error);
         this.error = error;
+      } finally {
+        this.isLoading = false;
       }
     },
   }

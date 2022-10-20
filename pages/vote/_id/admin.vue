@@ -198,6 +198,7 @@ export default {
         },
         async onClickTally() {
             try {
+                this.isLoading = true;
                 const { tallyingProof, tallyingResult } = await tallying(this.encryptedVotes)
                 const tx = await this.eVoteInstance.methods.setTally(
                     tallyingResult, tallyingProof.a, tallyingProof.b, tallyingProof.c
@@ -206,15 +207,20 @@ export default {
             } catch (error) {
                 console.error(error);
                 this.error = error;
+            } finally {
+                this.isLoading = false;
             }
         },
         async onClickRefund() {
             try {
+                this.isLoading = true;
                 const tx = await this.eVoteInstance.methods.refund().send({ from: this.getAddress });
                 console.log(tx);
             } catch (error) {
                 console.error(error);
                 this.error = error;
+            } finally {
+                this.isLoading = false;
             }
         },
     },
