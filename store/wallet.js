@@ -22,15 +22,38 @@ const mutations = {
 
 
 const actions = {
-    async initWallet({ commit }) {
+    async initWallet({ commit, dispatch }) {
         if (window.ethereum) {
             const res = await window.ethereum.request({ method: 'eth_requestAccounts' });
             const web3 = new Web3(window.ethereum);
+            await dispatch('switchNetwork');
             commit(mutationTypes.SET_WEB3, () => web3);
             commit(mutationTypes.SET_ADDRESS, res[0]);
             return true;
         }
         return false;
+    },
+    async switchNetwork() {
+        try {
+            await window.ethereum.request({
+                method: 'wallet_switchEthereumChain',
+                params: [{ chainId: '0x5' }],
+            });
+        } catch (switchError) {
+            if (switchError.code === 4902) {
+                await window.ethereum.request({
+                    method: 'wallet_addEthereumChain',
+                    params: [
+                        {
+                            chainId: '0x5',
+                            chainName: 'Goerli Test Network',
+                            rpcUrls: ['https://...'] /* ... */,
+                        },
+                    ],
+                });
+            }
+            throw switchError;
+        }
     }
 }
 
