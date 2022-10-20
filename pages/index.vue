@@ -5,68 +5,56 @@
       </v-card>
       <v-card>
         <v-card-title class="headline">
-          Welcome to the Vuetify + Nuxt.js template
+          Self-tallying E-Voting DApp using zk-SNARKs
         </v-card-title>
         <v-card-text>
           <p>
-            Vuetify is a progressive Material Design component framework for
-            Vue.js. It was designed to empower developers to create amazing
-            applications.
+            Our work is based on the paper <i>Elsheikh, Muhammad & Youssef, Amr. (2022). Dispute-free Scalable Open Vote Network using zk-SNARKs.</i>
+            We have modified the proposed functions to allow the proposed model and smart contracts to be deployed and used as a DApp.
+            Users can setup and vote using MetaMask or other web3 compatible wallet.
           </p>
           <p>
-            For more information on Vuetify, check out the
+            For more information on the protocol, check out the original
             <a
-              href="https://vuetifyjs.com"
+              href="https://arxiv.org/abs/2203.03363"
               target="_blank"
               rel="noopener noreferrer"
             >
-              documentation </a
+              paper</a
             >.
           </p>
           <p>
-            If you have questions, please join the official
+            Smart contract are taken and modified from the code provided by the original paper authors, which can be found
             <a
-              href="https://chat.vuetifyjs.com/"
+              href="https://github.com/mhgharieb/zkSNARK-Open-Vote-Network"
               target="_blank"
               rel="noopener noreferrer"
               title="chat"
             >
-              discord </a
+              here</a
             >.
           </p>
           <p>
-            Find a bug? Report it on the github
+            Interested in contributing to our work? Take a look at our 
             <a
-              href="https://github.com/vuetifyjs/vuetify/issues"
+              href="https://github.com/DASC7600-2022-E-Voting/E-Voting-App"
               target="_blank"
               rel="noopener noreferrer"
               title="contribute"
             >
-              issue board </a
+              Github</a
             >.
           </p>
           <p>
-            Thank you for developing with Vuetify and I look forward to bringing
-            more exciting features in the future.
+            Thank you for using our app!
           </p>
-          <div class="text-xs-right">
-            <em><small>&mdash; John Leider</small></em>
-          </div>
           <hr class="my-3" />
           <a
-            href="https://nuxtjs.org/"
+            href="https://github.com/DASC7600-2022-E-Voting"
             target="_blank"
             rel="noopener noreferrer"
           >
-            Nuxt Documentation
-          </a>
-          <br />
-          <a
-            href="https://github.com/nuxt/nuxt.js"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Nuxt GitHub
+            Our GitHub
           </a>
         </v-card-text>
         <v-card-actions>
