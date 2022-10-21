@@ -37,7 +37,7 @@ const actions = {
         try {
             await window.ethereum.request({
                 method: 'wallet_switchEthereumChain',
-                params: [{ chainId: '0x5' }],
+                params: [{ chainId: '0x13881' }],
             });
         } catch (switchError) {
             if (switchError.code === 4902) {
@@ -45,9 +45,9 @@ const actions = {
                     method: 'wallet_addEthereumChain',
                     params: [
                         {
-                            chainId: '0x5',
-                            chainName: 'Goerli Test Network',
-                            rpcUrls: ['https://...'] /* ... */,
+                            chainId: '0x13881',
+                            chainName: 'Mumbai',
+                            rpcUrls: ['https://matic-mumbai.chainstacklabs.com'] /* ... */,
                         },
                     ],
                 });
