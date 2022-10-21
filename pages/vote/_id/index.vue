@@ -166,7 +166,9 @@ export default {
         try {
           const voteX = await this.eVoteInstance.methods.encryptedVotes(address, 0).call();
           const voteY = await this.eVoteInstance.methods.encryptedVotes(address, 1).call();
-          this.votedVoters.push(address);
+          if ((voteX && voteX !== '0') || (voteY && voteY !== '0')) {
+            this.votedVoters.push(address);
+          }
           this.encryptedVotes.push([voteX, voteY]);
         } catch (err) {
           console.error(err);
