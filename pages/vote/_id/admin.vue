@@ -69,7 +69,7 @@ export default {
             return this.getAddress ? getVerifierZKSNARKContract(this.getWeb3(), this.zkSNARKContractAddress) : null;
         },
         keysIsEmpty() {
-            return this.keys.map(k => !(k && k[0] && k[0][0] !== '0'));
+            return this.keys.map(k => !(k && k[0] && k[0][0] && k[0][0]!== '0'));
         },
         isTallyingPhase() {
             return this.currentBlock >= this.finishVotingBlock && this.currentBlock < this.finishTallyBlock;
@@ -114,6 +114,8 @@ export default {
             const keyIndex = this.keysIsEmpty.findIndex(k => k);
             if (keyIndex === -1) {
                 this.keyProgress = 3;
+            } else {
+                this.keyProgress = keyIndex;
             }
         },
         async updateVotingPhases() {
@@ -166,14 +168,14 @@ export default {
                 if (!this.zkSNARKContractAddress) return;
                 const promises = [];
                 this.isLoading = true;
-                if (this.keyProgress === 0) {
+                if (this.keyProgress <= 0) {
                     promises.push(this.downloadAndSetKey('./zk/verifier_PublicKey.json', 0)
                         .then(() => {
                             this.keyProgress += 1;
                         })
                     );
                 }
-                if (this.keyProgress === 1) {
+                if (this.keyProgress <= 1) {
                     promises.push(this.downloadAndSetKey('./zk/verifier_EncrpytedVote.json', 1)
                         .then(() => {
                             this.keyProgress += 1;
@@ -181,7 +183,7 @@ export default {
                     );
                 }
 
-                if (this.keyProgress === 2) {
+                if (this.keyProgress <= 2) {
                     promises.push(this.downloadAndSetKey('./zk/verifier_tallying.json', 2)
                         .then(() => {
                             this.keyProgress += 1;
