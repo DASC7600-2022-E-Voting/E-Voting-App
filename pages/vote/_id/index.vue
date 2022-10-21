@@ -61,6 +61,7 @@ export default {
   data() {
     return {
       error: '',
+      isLoading: false,
       contractAddress: this.$route.params.id,
 
       voters,

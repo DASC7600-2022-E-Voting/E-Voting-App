@@ -76,11 +76,11 @@ export default {
     methods: {
         async deploy() {
             try {
+                this.isLoading = true;
                 const [verifierZKSNARK, verifierMerkleTree] = await Promise.all([
                     newVerifierZKSNARKContract(this.getWeb3()).send({ from: this.getAddress }),
                     newVerifierMerkleTreeContract(this.getWeb3()).send({ from: this.getAddress }),
                 ]);
-                this.isLoading = true;
                 console.log(verifierZKSNARK);
                 console.log(verifierMerkleTree);
                 const verifierZKSNARKAddress = verifierZKSNARK.options.address;
