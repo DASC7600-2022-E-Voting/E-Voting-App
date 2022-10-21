@@ -151,7 +151,6 @@ export default {
                     this.votedVoters.push(address);
                     this.encryptedVotes.push([voteX, voteY]);
                 } catch (err) {
-                    console.error(err);
                     break;
                 }
             }

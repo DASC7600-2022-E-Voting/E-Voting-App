@@ -150,11 +150,8 @@ export default {
         try {
           const address = await this.eVoteInstance.methods.voters(i).call();
           this.registeredVoters.push(address);
-          console.log(address);
           const publicKeyX = await this.eVoteInstance.methods.publicKeys(address, 0).call();
           const publicKeyY = await this.eVoteInstance.methods.publicKeys(address, 1).call();
-          console.log(publicKeyX);
-          console.log(publicKeyY);
           this.votingKeysX.push(publicKeyX);
           this.votingKeysY.push(publicKeyY);
         } catch (err) {
@@ -171,7 +168,6 @@ export default {
           }
           this.encryptedVotes.push([voteX, voteY]);
         } catch (err) {
-          console.error(err);
           break;
         }
       }
