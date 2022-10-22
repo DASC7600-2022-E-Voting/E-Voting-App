@@ -1,14 +1,17 @@
 /* eslint-disable no-unused-vars */
 import Web3 from "web3";
+import { NETWORKS } from "~/constant";
 
 const state = () => ({
     web3: null,
     address: '',
+    networkId: NETWORKS[0].chainId,
 })
 
 const mutationTypes = {
     'SET_WEB3': 'SET_WEB3',
     'SET_ADDRESS': 'SET_ADDRESS',
+    'SET_NETWORK_ID': 'SET_NETWORK_ID',
 }
 
 const mutations = {
@@ -18,42 +21,55 @@ const mutations = {
     [mutationTypes.SET_ADDRESS](state, address) {
         state.address = address;
     },
+    [mutationTypes.SET_NETWORK_ID](state, networkId) {
+        state.networkId = networkId;
+    },
 };
 
 
 const actions = {
-    async initWallet({ commit, dispatch }) {
+    async initWallet({ commit, dispatch, state }) {
         if (window.ethereum) {
             const res = await window.ethereum.request({ method: 'eth_requestAccounts' });
             const web3 = new Web3(window.ethereum);
-            await dispatch('switchNetwork');
             commit(mutationTypes.SET_WEB3, () => web3);
             commit(mutationTypes.SET_ADDRESS, res[0]);
+            await dispatch('switchNetwork', state.networkId);
             return true;
         }
         return false;
     },
-    async switchNetwork() {
-        try {
-            await window.ethereum.request({
-                method: 'wallet_switchEthereumChain',
-                params: [{ chainId: '0x13881' }],
-            });
-        } catch (switchError) {
-            if (switchError.code === 4902) {
+    async switchNetwork({ commit }, targetId) {
+        const network = NETWORKS.find(n => n.chainId === targetId);
+        if (!network) throw new Error('NETWORK_NOT_FOUND');
+        const {
+            chainId,
+            chainName,
+            rpcUrls,
+        } = network;
+        if (window.ethereum) {
+            try {
                 await window.ethereum.request({
-                    method: 'wallet_addEthereumChain',
-                    params: [
-                        {
-                            chainId: '0x13881',
-                            chainName: 'Mumbai',
-                            rpcUrls: ['https://matic-mumbai.chainstacklabs.com'] /* ... */,
-                        },
-                    ],
+                    method: 'wallet_switchEthereumChain',
+                    params: [{ chainId }],
                 });
+            } catch (switchError) {
+                if (switchError.code === 4902) {
+                    await window.ethereum.request({
+                        method: 'wallet_addEthereumChain',
+                        params: [
+                            {
+                                chainId,
+                                chainName,
+                                rpcUrls,
+                            },
+                        ],
+                    });
+                }
+                throw switchError;
             }
-            throw switchError;
         }
+        commit(mutationTypes.SET_NETWORK_ID, targetId);
     }
 }
 
@@ -63,7 +79,10 @@ const getters = {
     },
     getAddress(state) {
         return state.address
-    }
+    },
+    getNetworkId(state) {
+        return state.networkId
+    },
 }
 
 export default {
