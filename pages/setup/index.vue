@@ -29,7 +29,7 @@
                         Vote admin page
                     </nuxt-link>
                 </div>
-                <v-btn v-else :disabled="!getAddress || Loading" @click="deploy">Create</v-btn>
+                <v-btn v-else :disabled="!getAddress || isLoading" @click="deploy">Create</v-btn>
             </div>
         </div>
     </div>

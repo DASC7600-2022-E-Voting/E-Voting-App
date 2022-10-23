@@ -36,8 +36,9 @@ export default {
     },
     methods: {
         ...mapActions('wallet', ['initWallet', 'switchNetwork']),
-        async onChangeNetwork() {
-            await this.switchNetwork(this.networkValue);
+        async onChangeNetwork(e) {
+            this.networkValue = e;
+            await this.switchNetwork(e);
         },
         async onClickConnectWallet() {
             let res = false;
