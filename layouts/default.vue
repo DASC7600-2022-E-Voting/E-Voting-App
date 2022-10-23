@@ -57,6 +57,11 @@ export default {
                     to: "/",
                 },
                 {
+                    icon: "mdi-list-status",
+                    title: "Vote List",
+                    to: "/list",
+                },
+                {
                     icon: "mdi-chart-bubble",
                     title: "New Vote",
                     to: "/setup",

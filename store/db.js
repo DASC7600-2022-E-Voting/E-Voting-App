@@ -36,14 +36,14 @@ const actions = {
             messagingSenderId: "125321271640",
             appId: "1:125321271640:web:ad50d02ea9895db940ad2d",
             measurementId: "G-632896FHS6"
-          };
+        };
         initializeApp(firebaseConfig);
         commit(mutationTypes.SET_DB_INITED);
     },
     async fetchVotingList({ dispatch, commit, state }, { networkId }) {
         if (!state.inited) await dispatch('initDatabse');
         const snapshot = await get(query(ref(getDatabase(), `votings`), orderByChild('networkId'), equalTo(networkId)))
-        const list = snapshot.val() || [];
+        const list = Object.values(snapshot.val() || {});
         commit(mutationTypes.SET_VOTING_LIST, list);
         return list;
     },
@@ -77,6 +77,9 @@ const actions = {
 const getters = {
     getVotings(state) {
         return state.votings
+    },
+    getVotingById(state) {
+        return (id) => (state.votings || []).find(v => v.contractId.toLowerCase() === id.toLowerCase());
     },
 }
 

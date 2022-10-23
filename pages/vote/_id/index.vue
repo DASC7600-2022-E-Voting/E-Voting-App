@@ -64,9 +64,6 @@ export default {
       isLoading: false,
       contractAddress: this.$route.params.id,
 
-      voters,
-      usersMerkleTree: new MerkleTree(voters), // TODO: not hardcode voters
-
       currentBlock: 0,
       finishRegistartionBlock: 0,
       finishVotingBlock: 0,
@@ -87,7 +84,18 @@ export default {
     }
   },
   computed: {
-    ...mapGetters('wallet', ['getAddress', 'getWeb3', 'getBlockTime']),
+    ...mapGetters('wallet', ['getAddress', 'getWeb3', 'getBlockTime']),,
+    ...mapGetters('db', ['getVotingById']),
+    voters() {
+      const storedInfo = this.getVotingById(this.contractAddress);
+      if (storedInfo) {
+        return storedInfo.voters;
+      }
+      return voters;
+    },
+    usersMerkleTree() {
+      return new MerkleTree(this.voters);
+    },
     isVoter() {
       return this.getAddress && voters.map(v => v.toLowerCase()).includes(this.getAddress.toLowerCase());
     },
