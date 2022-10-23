@@ -35,7 +35,7 @@
     </div>
 </template>
 <script>
-import { mapGetters } from 'vuex';
+import { mapActions, mapGetters } from 'vuex';
 import web3 from 'web3';
 import {
     newEVotingContract,
@@ -61,7 +61,7 @@ export default {
         };
     },
     computed: {
-        ...mapGetters('wallet', ['getAddress', 'getWeb3']),
+        ...mapGetters('wallet', ['getAddress', 'getWeb3', 'getNetworkId']),
         usersMerkleTree() {
             return new MerkleTree(this.voters);
         },
@@ -74,6 +74,7 @@ export default {
         },
     },
     methods: {
+        ...mapActions('db', ['postNewVoting']),
         async deploy() {
             try {
                 this.isLoading = true;
@@ -94,6 +95,17 @@ export default {
                     this.tallyBlockInterval,
                 ]).send({ from: this.getAddress, value: web3.utils.toWei(DEPOSIT_VALUE, "ether") });
                 this.newContractAddress = eVoting.options.address;
+                const currentBlock = await this.getWeb3().eth.getBlockNumber();
+                await this.postNewVoting({
+                    contractId: eVoting.options.address,
+                    networkId: this.getNetworkId,
+                    currentBlock,
+                    finishRegistartionBlock: currentBlock + this.registrationBlockInterval,
+                    finishVotingBlock: currentBlock + this.votingBlockInterval,
+                    finishTallyBlock: currentBlock + this.tallyBlockInterval,
+                    admin: this.getAddress,
+                    voters: this.voters,
+                })
             } catch (err) {
                 console.error(err);
                 this.error = err;
