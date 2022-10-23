@@ -42,7 +42,7 @@ const actions = {
         }
         return false;
     },
-    async switchNetwork({ commit }, targetId) {
+    async switchNetwork({ commit, dispatch }, targetId) {
         const network = NETWORKS.find(n => n.chainId === targetId);
         if (!network) throw new Error('NETWORK_NOT_FOUND');
         const {
@@ -73,6 +73,11 @@ const actions = {
             }
         }
         commit(mutationTypes.SET_NETWORK_ID, targetId);
+        try {
+            dispatch('db/fetchVotingList', { networkId: targetId }, { root: true });
+        } catch (e) {
+            console.error(e);
+        }
     }
 }
 
