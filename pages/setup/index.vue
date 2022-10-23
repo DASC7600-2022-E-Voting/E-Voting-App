@@ -96,16 +96,20 @@ export default {
                 ]).send({ from: this.getAddress, value: web3.utils.toWei(DEPOSIT_VALUE, "ether") });
                 this.newContractAddress = eVoting.options.address;
                 const currentBlock = await this.getWeb3().eth.getBlockNumber();
-                await this.postNewVoting({
-                    contractId: eVoting.options.address,
-                    networkId: this.getNetworkId,
-                    currentBlock,
-                    finishRegistartionBlock: currentBlock + this.registrationBlockInterval,
-                    finishVotingBlock: currentBlock + this.votingBlockInterval,
-                    finishTallyBlock: currentBlock + this.tallyBlockInterval,
-                    admin: this.getAddress,
-                    voters: this.voters,
-                })
+                try {
+                    await this.postNewVoting({
+                        contractId: eVoting.options.address,
+                        networkId: this.getNetworkId,
+                        currentBlock,
+                        finishRegistartionBlock: currentBlock + this.registrationBlockInterval,
+                        finishVotingBlock: currentBlock + this.votingBlockInterval,
+                        finishTallyBlock: currentBlock + this.tallyBlockInterval,
+                        admin: this.getAddress,
+                        voters: this.voters,
+                    })
+                } catch (e) {
+                    console.error(e);
+                }
             } catch (err) {
                 console.error(err);
                 this.error = err;

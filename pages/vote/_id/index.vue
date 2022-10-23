@@ -84,7 +84,7 @@ export default {
     }
   },
   computed: {
-    ...mapGetters('wallet', ['getAddress', 'getWeb3', 'getBlockTime']),,
+    ...mapGetters('wallet', ['getAddress', 'getWeb3', 'getBlockTime']),
     ...mapGetters('db', ['getVotingById']),
     voters() {
       const storedInfo = this.getVotingById(this.contractAddress);
