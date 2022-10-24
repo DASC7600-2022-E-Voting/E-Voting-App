@@ -83,6 +83,9 @@ const getters = {
     getNetworkId(state) {
         return state.networkId
     },
+    getBlockTime(state) {
+        return NETWORKS.find(n => n.chainId === state.networkId).blockTime
+    }
 }
 
 export default {

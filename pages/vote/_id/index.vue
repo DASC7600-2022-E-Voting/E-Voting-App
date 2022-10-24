@@ -87,7 +87,7 @@ export default {
     }
   },
   computed: {
-    ...mapGetters('wallet', ['getAddress', 'getWeb3']),
+    ...mapGetters('wallet', ['getAddress', 'getWeb3', 'getBlockTime']),
     isVoter() {
       return this.getAddress && voters.map(v => v.toLowerCase()).includes(this.getAddress.toLowerCase());
     },
@@ -183,9 +183,10 @@ export default {
       this.finishRegistartionBlock = Number(finishRegistartionBlock);
       this.finishVotingBlock = Number(finishVotingBlock);
       this.finishTallyBlock = Number(finishTallyBlock);
-      this.registrationEndTime = new Date(currentBlock > this.finishRegistartionBlock ? (await this.getWeb3().eth.getBlock(this.finishRegistartionBlock)).timestamp * 1000 : Date.now() + (this.finishRegistartionBlock - currentBlock) * 12000);
-      this.votingEndTime = new Date(currentBlock > this.finishVotingBlock ? (await this.getWeb3().eth.getBlock(this.finishVotingBlock)).timestamp * 1000 : Date.now() + (this.finishVotingBlock - currentBlock) * 12000);
-      this.tallyEndTime = new Date(currentBlock > this.finishTallyBlock ? (await this.getWeb3().eth.getBlock(this.finishTallyBlock)).timestamp * 1000 : Date.now() + (this.finishTallyBlock - currentBlock) * 12000);
+      const blockTime = this.getBlockTime;
+      this.registrationEndTime = new Date(currentBlock > this.finishRegistartionBlock ? (await this.getWeb3().eth.getBlock(this.finishRegistartionBlock)).timestamp * 1000 : Date.now() + (this.finishRegistartionBlock - currentBlock) * blockTime * 1000);
+      this.votingEndTime = new Date(currentBlock > this.finishVotingBlock ? (await this.getWeb3().eth.getBlock(this.finishVotingBlock)).timestamp * 1000 : Date.now() + (this.finishVotingBlock - currentBlock) * blockTime * 1000);
+      this.tallyEndTime = new Date(currentBlock > this.finishTallyBlock ? (await this.getWeb3().eth.getBlock(this.finishTallyBlock)).timestamp * 1000 : Date.now() + (this.finishTallyBlock - currentBlock) * blockTime * 1000);
     },
     async onClickRegister() {
       try {
