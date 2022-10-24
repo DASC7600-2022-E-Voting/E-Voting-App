@@ -33,6 +33,9 @@ const actions = {
             const res = await window.ethereum.request({ method: 'eth_requestAccounts' });
             const web3 = new Web3(window.ethereum);
             commit(mutationTypes.SET_WEB3, () => web3);
+            window.ethereum.on('accountsChanged', function (accounts) {
+                commit(mutationTypes.SET_ADDRESS, accounts[0]);
+            })
             commit(mutationTypes.SET_ADDRESS, res[0]);
             await dispatch('switchNetwork', state.networkId);
             return true;
