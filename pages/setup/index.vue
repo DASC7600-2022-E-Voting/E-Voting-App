@@ -102,8 +102,8 @@ export default {
                         networkId: this.getNetworkId,
                         currentBlock,
                         finishRegistartionBlock: currentBlock + this.registrationBlockInterval,
-                        finishVotingBlock: currentBlock + this.votingBlockInterval,
-                        finishTallyBlock: currentBlock + this.tallyBlockInterval,
+                        finishVotingBlock: currentBlock + this.registrationBlockInterval + this.votingBlockInterval,
+                        finishTallyBlock: currentBlock + this.registrationBlockInterval + this.votingBlockInterval + this.tallyBlockInterval,
                         admin: this.getAddress,
                         voters: this.voters,
                     })
