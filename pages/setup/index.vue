@@ -101,9 +101,9 @@ export default {
                         contractId: eVoting.options.address,
                         networkId: this.getNetworkId,
                         currentBlock,
-                        finishRegistartionBlock: currentBlock + this.registrationBlockInterval,
-                        finishVotingBlock: currentBlock + this.registrationBlockInterval + this.votingBlockInterval,
-                        finishTallyBlock: currentBlock + this.registrationBlockInterval + this.votingBlockInterval + this.tallyBlockInterval,
+                        finishRegistartionBlock: currentBlock + Number(this.registrationBlockInterval),
+                        finishVotingBlock: currentBlock + Number(this.registrationBlockInterval) + Number(this.votingBlockInterval),
+                        finishTallyBlock: currentBlock + Number(this.registrationBlockInterval) + Number(this.votingBlockInterval) + Number(this.tallyBlockInterval),
                         admin: this.getAddress,
                         voters: this.voters,
                     })
