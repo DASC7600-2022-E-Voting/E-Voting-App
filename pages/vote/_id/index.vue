@@ -154,6 +154,11 @@ export default {
     async getRegisteredAndVotedVoters() {
       const nVoters = await this.eVoteInstance.methods.nVoters().call();
       this.nVoters = nVoters;
+      this.registeredVoters = [];
+      this.votingKeysX = [];
+      this.votingKeysY = [];
+      this.votedVoters = [];
+      this.encryptedVotes = [];
       for (let i = 0; i < nVoters; i += 1) {
         try {
           const address = await this.eVoteInstance.methods.voters(i).call();
