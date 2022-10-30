@@ -15,7 +15,7 @@
         />
         <a v-if="showInstallMetaMask" href="https://metamask.io/" target="_blank">Install MetaMask</a>
         <span v-else-if="getAddress">{{ getAddress }}</span>
-        <v-btn v-else @click.stop="onClickConnectWallet">Connect wallet</v-btn>
+        <v-btn v-else color="green" @click.stop="onClickConnectWallet">Connect wallet</v-btn>
         <v-dialog v-model="errorDialog">
             <v-card>
                 <v-card-title>Wallet Error</v-card-title>

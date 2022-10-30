@@ -1,25 +1,59 @@
 <template>
     <div>
-        <div v-if="error">{{ error }}</div>
-        <div v-if="isLoading">Loading...</div>
-        <div>
+        <h1>Setting Up New Vote</h1>
+        <v-form v-model="inputValid" lazy-validation>
+            <h2>Voters List</h2>
             <div>
-                <label>Voter list:</label>
-                <v-textarea v-model="votersString" />
+                <v-textarea 
+                    v-model="votersString"
+                    solo
+                    :rules="[voterListRule]"
+                />
             </div>
+            <h2>
+                Intervals
+                <v-tooltip right>
+                    <template #activator="{ on }">
+                        <v-icon small v-on="on">mdi-information-outline</v-icon>
+                    </template>
+                    <div>1 Ethereum Block = 12 seconds</div>
+                    <div>1 Polygon Block = 5 seconds</div>
+                </v-tooltip>
+            </h2>
             <div>
-                <div>
-                    <label>registration Block Interval:</label>
-                    <v-text-field v-model="registrationBlockInterval" type="number" />
-                </div>
-                <div>
-                    <label>voting Block Interval:</label>
-                    <v-text-field v-model="votingBlockInterval" type="number" />
-                </div>
-                <div>
-                    <label>tally Block Interval:</label>
-                    <v-text-field v-model="tallyBlockInterval" type="number" />
-                </div>
+                <v-row no-gutters>
+                    <v-col cols="3">Registration Block Interval:</v-col>
+                    <v-col class="pa-0 pr-4">
+                        <v-text-field
+                            v-model="registrationBlockInterval"
+                            type="number"
+                            solo requred
+                            :rules="[numberRule]"
+                        />
+                    </v-col>
+                </v-row>
+                <v-row no-gutters>
+                    <v-col cols="3">Voting Block Interval:</v-col>
+                    <v-col class="pa-0 pr-4">
+                        <v-text-field
+                            v-model="votingBlockInterval" 
+                            type="number" 
+                            solo required
+                            :rules="[numberRule]"
+                        />
+                    </v-col>
+                </v-row>
+                <v-row no-gutters>
+                    <v-col cols="3">Tally Block Interval:</v-col>
+                    <v-col class="pa-0 pr-4">
+                        <v-text-field
+                            v-model="tallyBlockInterval"
+                            type="number"
+                            solo required
+                            :rules="[numberRule]"
+                        />
+                    </v-col>
+                </v-row>
             </div>
             <div>
                 <div v-if="newContractAddress">
@@ -29,10 +63,24 @@
                         Vote admin page
                     </nuxt-link>
                 </div>
-                <v-btn v-else :disabled="!getAddress || isLoading" @click="deploy">Create</v-btn>
+                <v-btn
+                    v-else :disabled="!getAddress || isLoading || !inputValid" 
+                    color="green"
+                    @click="deploy"
+                >Create</v-btn>
             </div>
-        </div>
+        </v-form>
+
+        <div v-if="error">{{ error }}</div>
+
+        <v-overlay :value="isLoading">
+            <v-progress-circular
+                indeterminate
+                size="64"
+            ></v-progress-circular>
+        </v-overlay>
     </div>
+
 </template>
 <script>
 import { mapActions, mapGetters } from 'vuex';
@@ -58,6 +106,7 @@ export default {
             votingBlockInterval: 300,
             tallyBlockInterval: 300,
             newContractAddress: '',
+            inputValid: false
         };
     },
     computed: {
@@ -82,7 +131,9 @@ export default {
                     newVerifierZKSNARKContract(this.getWeb3()).send({ from: this.getAddress }),
                     newVerifierMerkleTreeContract(this.getWeb3()).send({ from: this.getAddress }),
                 ]);
+                // eslint-disable-next-line no-console
                 console.log(verifierZKSNARK);
+                // eslint-disable-next-line no-console
                 console.log(verifierMerkleTree);
                 const verifierZKSNARKAddress = verifierZKSNARK.options.address;
                 const verifierMerkleTreeAddress = verifierMerkleTree.options.address;
@@ -108,14 +159,26 @@ export default {
                         voters: this.voters,
                     })
                 } catch (e) {
+                    // eslint-disable-next-line no-console
                     console.error(e);
                 }
             } catch (err) {
+                // eslint-disable-next-line no-console
                 console.error(err);
                 this.error = err;
             } finally {
                 this.isLoading = false;
             }
+        },
+        voterListRule(list){
+            if(list.length===0) return 'There must be at least one voter.'
+            return true
+        },
+        numberRule(num){
+            const _num = Number(num)
+            if (_num <= 0) return 'Block number must be positive.'
+            if (_num - Math.floor(_num) !== 0) return 'Please enter an integer'
+            return true
         },
     },
 }
