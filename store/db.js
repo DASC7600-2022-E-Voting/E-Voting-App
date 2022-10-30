@@ -76,7 +76,11 @@ const actions = {
 
 const getters = {
     getVotings(state) {
-        return state.votings
+        if (state.votings){
+            // newest first
+            return [...state.votings].sort((a, b) => b.currentBlock - a.currentBlock)
+        }
+        return null
     },
     getVotingById(state) {
         return (id) => (state.votings || []).find(v => v.contractId.toLowerCase() === id.toLowerCase());
