@@ -1,9 +1,7 @@
 <template>
   <v-row justify="center" align="center">
     <v-col cols="12" sm="8" md="6">
-      <v-card class="logo py-4 d-flex justify-center">
-      </v-card>
-      <v-card>
+      <v-card class="mt-4">
         <v-card-title class="headline">
           Self-tallying E-Voting DApp using zk-SNARKs
         </v-card-title>
@@ -42,7 +40,7 @@
               rel="noopener noreferrer"
               title="contribute"
             >
-              Github</a
+              GitHub</a
             >.
           </p>
           <p>
