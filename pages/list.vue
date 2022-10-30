@@ -1,9 +1,19 @@
 <template>
   <div>
     <div v-if="!hasVotings">No votings found</div>
-    <div v-for="v in getVotings" :key="v.contractId">
-      <nuxt-link :to="`/vote/${v.contractId}`">{{ v.contractId }}</nuxt-link>
-    </div>
+    <v-card 
+      v-for="v in getVotings" :key="v.contractId"
+      dense class="py-1 pl-4 ma-2"
+      nuxt :to="`/vote/${v.contractId}`"
+    >
+      <v-card-text>
+        <v-row>{{ `Contract Id: ${v.contractId}` }}</v-row>
+        <v-row>{{ `Admin Id: ${v.admin}`}}</v-row>
+        <v-row>{{ `Number of Voters: ${v.voters.length}`}}</v-row>
+        <v-row>{{ `Initiated at (Block): ${v.currentBlock}`}}</v-row>
+        <v-row>{{ `Vote Phases Durations (Blocks): ${phaseDurations(v)}` }}</v-row>
+      </v-card-text>
+    </v-card>
   </div>
 </template>
 
@@ -39,6 +49,13 @@ export default {
   },
   methods: {
     ...mapActions('db', ['fetchVotingList']),
+    phaseDurations(v){
+      return [
+        v.finishRegistartionBlock - v.currentBlock,
+        v.finishVotingBlock - v.finishRegistartionBlock,
+        v.finishTallyBlock - v.finishVotingBlock
+      ].join(', ')
+    }
   }
 }
 </script>
