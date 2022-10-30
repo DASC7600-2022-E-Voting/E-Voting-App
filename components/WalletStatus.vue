@@ -63,11 +63,17 @@ export default {
         this.showInstallMetaMask = !window.ethereum;
     },
     methods: {
-        // ...mapMutations('wallet', ['setError']),
         ...mapActions('wallet', ['initWallet', 'switchNetwork']),
         async onChangeNetwork(e) {
             this.networkValue = e;
-            await this.switchNetwork(e);
+            try {
+                await this.switchNetwork(e);
+                this.error = ''
+            } catch (error) {
+                // eslint-disable-next-line no-console
+                console.error(error);
+                this.error = error;
+            }
         },
         async onClickConnectWallet() {
             let res = false;
