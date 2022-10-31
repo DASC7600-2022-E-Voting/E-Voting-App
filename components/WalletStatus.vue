@@ -65,6 +65,7 @@ export default {
     methods: {
         ...mapActions('wallet', ['initWallet', 'switchNetwork']),
         async onChangeNetwork(e) {
+            if (!this.getAddress) return  // not connected
             this.networkValue = e;
             try {
                 this.error = ''
