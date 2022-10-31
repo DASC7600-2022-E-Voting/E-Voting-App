@@ -67,8 +67,8 @@ export default {
         async onChangeNetwork(e) {
             this.networkValue = e;
             try {
-                await this.switchNetwork(e);
                 this.error = ''
+                await this.switchNetwork(e);
             } catch (error) {
                 // eslint-disable-next-line no-console
                 console.error(error);
