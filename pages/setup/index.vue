@@ -16,8 +16,7 @@
                     <template #activator="{ on }">
                         <v-icon small v-on="on">mdi-information-outline</v-icon>
                     </template>
-                    <div>1 Ethereum Block = 12 seconds</div>
-                    <div>1 Polygon Block = 5 seconds</div>
+                    <div>{{`1 Block is equivalent to ${blockTime} seconds`}}</div>
                 </v-tooltip>
             </h2>
             <div>
@@ -92,7 +91,7 @@ import {
 } from '~/contracts';
 import { MerkleTree } from '~/helper/merkletree';
 import { voters } from '~/constant/stub';
-import { DEPOSIT_VALUE } from '~/constant';
+import { DEPOSIT_VALUE, NETWORKS } from '~/constant';
 
 export default {
     name: 'SetupPage',
@@ -114,6 +113,11 @@ export default {
         usersMerkleTree() {
             return new MerkleTree(this.voters);
         },
+        blockTime() {
+            return NETWORKS.find(network => 
+                network.chainId === this.getNetworkId
+            ).blockTime
+        }
     },
     watch: {
         votersString(s) {
