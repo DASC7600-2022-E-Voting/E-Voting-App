@@ -78,8 +78,8 @@ export default {
         async onClickConnectWallet() {
             let res = false;
             try {
-                res = await this.initWallet();
                 this.error = ''
+                res = await this.initWallet();
             } catch (error) {
                 // eslint-disable-next-line no-console
                 console.error(error);
