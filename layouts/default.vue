@@ -38,7 +38,6 @@
 </template>
 
 <script>
-// import { contractAddress } from '~/constant/stub';
 import WalletStatus from '~/components/WalletStatus.vue';
 
 export default {
@@ -63,11 +62,6 @@ export default {
                     title: "New Vote",
                     to: "/setup",
                 },
-                // {
-                //     icon: "mdi-chart-bubble",
-                //     title: "Demo Vote",
-                //     to: `/vote/${contractAddress.eVote}`,
-                // },
             ],
             title: "zk-SNARKs EVoting DApp",
         };
