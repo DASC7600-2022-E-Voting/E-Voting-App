@@ -1,5 +1,6 @@
 <template>
   <div>
+    <h1>Vote List</h1>
     <div v-if="!hasVotings">No votings found</div>
     <v-card 
       v-for="v in getVotings" :key="v.contractId"
