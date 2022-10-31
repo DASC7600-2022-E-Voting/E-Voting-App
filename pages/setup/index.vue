@@ -171,7 +171,7 @@ export default {
             }
         },
         voterListRule(list){
-            if(list.length===0) return 'There must be at least one voter.'
+            if (list.length===0) return 'There must be at least one voter.'
             return true
         },
         numberRule(num){
