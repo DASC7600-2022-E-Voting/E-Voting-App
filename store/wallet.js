@@ -76,6 +76,7 @@ const actions = {
         try {
             dispatch('db/fetchVotingList', { networkId: targetId }, { root: true });
         } catch (e) {
+            // eslint-disable-next-line no-console
             console.error(e);
         }
     }
