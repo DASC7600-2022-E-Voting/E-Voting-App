@@ -123,6 +123,7 @@ export default {
     },
     methods: {
         async init() {
+            this.isLoading = true
             await Promise.all([
                 this.getAdmin(),
                 this.getVerifierContract(),
@@ -130,6 +131,7 @@ export default {
                 this.getRegisteredAndVotedVoters(),
             ]);
             await this.getVerifierKeys();
+            this.isLoading = false
         },
         async getAdmin() {
             const address = await this.eVoteInstance.methods.admin().call();
