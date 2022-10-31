@@ -1,29 +1,60 @@
 <template>
     <div>
-        <div v-if="error">{{ error }}</div>
-        <div v-if="isLoading">Loading...</div>
-        <div v-if="!isAdmin">Please use admin account {{ admin }}</div>
-        <div>
-            <h2>Set ZK Verification keys</h2>
-            <div>Key Progress: {{ keyProgress }}/3</div>
-            <v-btn :disabled="!isAdmin || keyProgress === 3 || isLoading" @click="onClickSetKeys">Set verifier key
-            </v-btn>
-        </div>
-        <div>
-            <h2>Set tallying result</h2>
-            <div v-if="!isTallyingPhase">Is not tallying phase</div>
-            <div>
-                <v-btn :disabled="!isAdmin || !isTallyingPhase || isLoading" @click="onClickTally">Tally</v-btn>
-            </div>
-        </div>
-        <div>
-            <h2>Set tallying result</h2>
-            <div v-if="!isRefundPhase">Is not refund phase</div>
-            <v-btn :disabled="!isAdmin || !isRefundPhase || isLoading" @click="onClickRefund">Refund</v-btn>
-        </div>
+        <h1>Admin Page</h1>
+        <v-alert 
+            v-if="!isAdmin"
+            type="error"
+            color="red darken-4"
+        >
+            Please use admin account {{ admin }}.
+        </v-alert>
+        <v-card dense class="py-1 pl-4 ma-2">
+            <v-card-title class="pa-2">Set ZK Verification Keys</v-card-title>
+            <v-card-text>
+                <div>Key Progress: {{ keyProgress }} / 3</div>
+                <v-btn 
+                    :disabled="error || !isAdmin || keyProgress === 3 || isLoading" 
+                    color="green"
+                    @click="onClickSetKeys"
+                >Set keys
+                </v-btn>
+            </v-card-text>
+        </v-card>
+        <v-card dense class="py-1 pl-4 ma-2">
+            <v-card-title class="pa-2">Set Tallying Result</v-card-title>
+            <v-card-text>
+                <div v-if="!isTallyingPhase">It is not tallying phase currently.</div>
+                <v-btn 
+                    :disabled="error || !isAdmin || !isTallyingPhase || isLoading"
+                    color="green"
+                    @click="onClickTally"
+                    >Tally
+                </v-btn>
+            </v-card-text>
+        </v-card>
+        <v-card dense class="py-1 pl-4 ma-2">
+            <v-card-title class="pa-2">Refund Deposits</v-card-title>
+            <v-card-text>
+                <div v-if="!isRefundPhase">It is not refund phase currently.</div>
+                <v-btn 
+                    :disabled="error || !isAdmin || !isRefundPhase || isLoading" 
+                    color="green"
+                    @click="onClickRefund"
+                >Refund</v-btn>
+            </v-card-text>
+        </v-card>
         <div>
             <nuxt-link :to="`/vote/${eVotingContractAddress}`">Back to voting page</nuxt-link>
         </div>
+
+        <div v-if="error">{{ error }}</div>
+
+        <v-overlay :value="isLoading">
+            <v-progress-circular
+                indeterminate
+                size="64"
+            ></v-progress-circular>
+        </v-overlay>
     </div>
 </template>
 
@@ -191,6 +222,7 @@ export default {
                 }
                 await Promise.all(promises);
             } catch (error) {
+                // eslint-disable-next-line no-console
                 console.error(error);
                 this.error = error;
             } finally {
@@ -204,8 +236,10 @@ export default {
                 const tx = await this.eVoteInstance.methods.setTally(
                     tallyingResult, tallyingProof.a, tallyingProof.b, tallyingProof.c
                 ).send({ from: this.getAddress });
+                // eslint-disable-next-line no-console
                 console.log(tx);
             } catch (error) {
+                // eslint-disable-next-line no-console
                 console.error(error);
                 this.error = error;
             } finally {
@@ -216,8 +250,10 @@ export default {
             try {
                 this.isLoading = true;
                 const tx = await this.eVoteInstance.methods.refund().send({ from: this.getAddress });
+                // eslint-disable-next-line no-console
                 console.log(tx);
             } catch (error) {
+                // eslint-disable-next-line no-console
                 console.error(error);
                 this.error = error;
             } finally {
