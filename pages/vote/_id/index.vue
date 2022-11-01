@@ -21,6 +21,14 @@
       You are not voter. Please connect to a voter account.
     </v-alert>
 
+    <v-alert 
+      v-else-if="!isCorrectNetwork"
+      type="error"
+      color="red darken-4"
+    >
+      The contract is not on the network you are using.
+    </v-alert>
+
     <template v-else>
       <v-card dense class="py-1 pl-4 ma-2">
         <v-card-title class="pa-2">Registration</v-card-title>
@@ -116,6 +124,7 @@ export default {
       error: '',
       isLoading: false,
       contractAddress: this.$route.params.id,
+      isCorrectNetwork: true,
 
       currentBlock: 0,
       finishRegistartionBlock: 0,
@@ -137,7 +146,7 @@ export default {
     }
   },
   computed: {
-    ...mapGetters('wallet', ['getAddress', 'getWeb3', 'getBlockTime']),
+    ...mapGetters('wallet', ['getAddress', 'getWeb3', 'getBlockTime', 'getNetworkId']),
     ...mapGetters('db', ['getVotingById']),
     voters() {
       const storedInfo = this.getVotingById(this.contractAddress);
@@ -189,6 +198,11 @@ export default {
         this.init();
       }
     },
+    getNetworkId(networkId){
+      if (networkId) {
+        this.init();
+      }
+    }
   },
   mounted() {
     if (this.getAddress) {
@@ -200,6 +214,7 @@ export default {
       this.isLoading = true
       this.error = ''
       try {
+        await this.checkContractOnNetwork();
         await Promise.all([
           this.getRegisteredAndVotedVoters(),
           this.getTally(),
@@ -209,6 +224,15 @@ export default {
         this.error = error
       } finally {
         this.isLoading = false
+      }
+    },
+    async checkContractOnNetwork(){
+      try {
+        const deposit = await this.eVoteInstance.methods.DEPOSIT().call();
+        this.isCorrectNetwork = deposit > 0;
+      } catch (error) {
+        this.error = error
+        this.isCorrectNetwork = false
       }
     },
     async getTally() {
