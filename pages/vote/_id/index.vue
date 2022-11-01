@@ -186,10 +186,9 @@ export default {
       return this.votedVoters.map(address => address.toLowerCase()).includes(this.getAddress)
     },
     voteResultDisplay() {
-      if (this.voteResult === -1) return 'No Result';
-      if (this.voteResult > this.nVoters / 2) return 'Yes';
-      if (this.voteResult < this.nVoters / 2) return 'No';
-      return 'Draw';
+      if (this.voteResult === -1 || this.votedVoters.length !== this.nVoters || this.isVotingPhase) return 'No Result'; 
+      if (this.isTallyingPhase && this.voteResult === 0) return 'No Result'  // not sure if not tallied, or all voted 0
+      return `Vote 0: ${this.nVoters - this.voteResult} / ${this.nVoters} ; Vote 1: ${this.voteResult} / ${this.nVoters}`
     },
   },
   watch: {
@@ -244,7 +243,7 @@ export default {
     },
     async getRegisteredAndVotedVoters() {
       const nVoters = await this.eVoteInstance.methods.nVoters().call();
-      this.nVoters = nVoters;
+      this.nVoters = Number(nVoters);
       this.registeredVoters = [];
       this.votingKeysX = [];
       this.votingKeysY = [];
