@@ -28,9 +28,10 @@
           <div>Registration end time: {{ registrationEndTime }}</div>
           <div>
             <template v-if="isRegisterPhase">
-              <div>Please Register as voter</div>
+              <div v-if="!isRegisteredVoter">Please Register as voter</div>
+              <div v-else>You have already registered.</div>
               <v-btn
-                :disabled="!isVoter || !isRegisterPhase || isLoading"
+                :disabled="!isVoter || !isRegisterPhase || isLoading || isRegisteredVoter"
                 color="green"
                 @click="onClickRegister"
               >
@@ -166,6 +167,9 @@ export default {
     isRefundPhase() {
       return this.currentBlock >= this.finishTallyBlock;
     },
+    isRegisteredVoter() {
+      return this.registeredVoters.map(address => address.toLowerCase()).includes(this.getAddress)
+    },
     voteResultDisplay() {
       if (this.voteResult === -1) return 'No Result';
       if (this.voteResult > this.nVoters / 2) return 'Yes';
@@ -270,6 +274,7 @@ export default {
         ).send({ from: this.getAddress, value: web3.utils.toWei(DEPOSIT_VALUE, "ether") });
         // eslint-disable-next-line no-console
         console.log(tx);
+        await this.getRegisteredAndVotedVoters();
       } catch (error) {
         // eslint-disable-next-line no-console
         console.error(error);
