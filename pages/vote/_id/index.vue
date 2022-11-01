@@ -28,10 +28,10 @@
           <div>Registration end time: {{ registrationEndTime }}</div>
           <div>
             <template v-if="isRegisterPhase">
-              <div v-if="!isRegisteredVoter">Please Register as voter</div>
-              <div v-else>You have already registered.</div>
+              <div v-if="isRegisteredVoter">You have already registered.</div>
+              <div v-else>Please Register as voter</div>
               <v-btn
-                :disabled="!isVoter || !isRegisterPhase || isLoading || isRegisteredVoter"
+                :disabled="!!error || !isVoter || !isRegisterPhase || isLoading || isRegisteredVoter"
                 color="green"
                 @click="onClickRegister"
               >
@@ -47,21 +47,24 @@
         <v-card-text>
           <div>Voting end time: {{ votingEndTime }}</div>
           <template v-if="isVotingPhase">
-            <div>Please Vote</div>
-            <v-radio-group
-              v-model="voteOption"
-              row dense
-            >
-              <v-radio label="Vote 0" :value="0" />
-              <v-radio label="Vote 1" :value="1" />
-            </v-radio-group>
-            <v-btn
-              :disabled="!isVoter || !isVotingPhase || isLoading || voteOption == null" 
-              color="green"
-              @click="onClickVote"
-            >
-              Vote
-            </v-btn>
+            <div v-if="isVotedVoter">You have already voted.</div>
+            <template v-else>
+              <div>Please Vote</div>
+              <v-radio-group
+                v-model="voteOption"
+                row dense
+              >
+                <v-radio label="Vote 0" :value="0" />
+                <v-radio label="Vote 1" :value="1" />
+              </v-radio-group>
+              <v-btn
+                :disabled="!!error || !isVoter || !isVotingPhase || isVotedVoter || isLoading || voteOption == null" 
+                color="green"
+                @click="onClickVote"
+              >
+                Vote
+              </v-btn>
+            </template>
           </template>
           <div v-else>It is not voting phase currently.</div>
         </v-card-text>
@@ -73,7 +76,7 @@
           <template v-if="isRefundPhase">
             <div>Please refund here</div>
             <v-btn
-              :disabled="!isVoter || !isRefundPhase || isLoading"
+              :disabled="!!error || !isVoter || !isRefundPhase || isLoading"
               color="green"
               @click="onClickRefund"
             >
@@ -169,6 +172,9 @@ export default {
     },
     isRegisteredVoter() {
       return this.registeredVoters.map(address => address.toLowerCase()).includes(this.getAddress)
+    },
+    isVotedVoter() {
+      return this.votedVoters.map(address => address.toLowerCase()).includes(this.getAddress)
     },
     voteResultDisplay() {
       if (this.voteResult === -1) return 'No Result';
@@ -302,6 +308,7 @@ export default {
         ).send({ from: this.getAddress });
         // eslint-disable-next-line no-console
         console.log(tx);
+        await this.getRegisteredAndVotedVoters();
       } catch (error) {
         // eslint-disable-next-line no-console
         console.error(error);
