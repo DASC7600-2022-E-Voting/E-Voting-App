@@ -2,21 +2,30 @@
     <div>
         <h1>Admin Page</h1>
         <v-alert 
-            v-if="!isAdmin"
+            v-if="!isAdmin && !isLoading && !error"
             type="error"
             color="red darken-4"
         >
-            Please use admin account {{ admin }}.
+            Please connect to admin account {{ admin }}
+        </v-alert>
+        <v-alert 
+            v-if="!isCorrectNetwork"
+            type="error"
+            color="red darken-4"
+        >
+            The contract is not on the network you are using.
         </v-alert>
         <v-card dense class="py-1 pl-4 ma-2">
             <v-card-title class="pa-2">Set ZK Verification Keys</v-card-title>
             <v-card-text>
+                <div v-if="!isSettingKeysPhase">It is not setting keys phase</div>
                 <div>Key Progress: {{ keyProgress }} / 3</div>
                 <v-btn 
-                    :disabled="error || !isAdmin || keyProgress === 3 || isLoading" 
+                    :disabled="!!error || !isAdmin || !isSettingKeysPhase || keyProgress === 3 || isLoading" 
                     color="green"
                     @click="onClickSetKeys"
-                >Set keys
+                >
+                    Set keys
                 </v-btn>
             </v-card-text>
         </v-card>
@@ -25,10 +34,11 @@
             <v-card-text>
                 <div v-if="!isTallyingPhase">It is not tallying phase currently.</div>
                 <v-btn 
-                    :disabled="error || !isAdmin || !isTallyingPhase || isLoading"
+                    :disabled="!!error || !isAdmin || !isTallyingPhase || isLoading"
                     color="green"
                     @click="onClickTally"
-                    >Tally
+                >
+                    Tally
                 </v-btn>
             </v-card-text>
         </v-card>
@@ -37,10 +47,12 @@
             <v-card-text>
                 <div v-if="!isRefundPhase">It is not refund phase currently.</div>
                 <v-btn 
-                    :disabled="error || !isAdmin || !isRefundPhase || isLoading" 
+                    :disabled="!!error || !isAdmin || !isRefundPhase || isLoading" 
                     color="green"
                     @click="onClickRefund"
-                >Refund</v-btn>
+                >
+                    Refund
+                </v-btn>
             </v-card-text>
         </v-card>
         <div>
@@ -74,9 +86,11 @@ export default {
             isLoading: false,
             keyProgress: 0,
             eVotingContractAddress: this.$route.params.id,
+            isCorrectNetwork: true,
             zkSNARKContractAddress: '',
             keys: [null, null, null],
             currentBlock: 0,
+            finishRegistartionBlock: 0,
             finishVotingBlock: 0,
             finishTallyBlock: 0,
 
@@ -89,7 +103,8 @@ export default {
         }
     },
     computed: {
-        ...mapGetters('wallet', ['getAddress', 'getWeb3']),
+        ...mapGetters('wallet', ['getAddress', 'getWeb3', 'getNetworkId']),
+        ...mapGetters('db', ['getVotingById']),
         isAdmin() {
             return this.admin && this.getAddress && this.getAddress.toLowerCase() === this.admin.toLowerCase();
         },
@@ -101,6 +116,9 @@ export default {
         },
         keysIsEmpty() {
             return this.keys.map(k => !(k && k[0] && k[0][0] && k[0][0]!== '0'));
+        },
+        isSettingKeysPhase() {
+            return this.currentBlock < this.finishRegistartionBlock
         },
         isTallyingPhase() {
             return this.currentBlock >= this.finishVotingBlock && this.currentBlock < this.finishTallyBlock;
@@ -115,6 +133,11 @@ export default {
                 this.init();
             }
         },
+        getNetworkId(networkId) {
+            if (networkId) {
+                this.init();
+            }
+        },
     },
     mounted() {
         if (this.getAddress) {
@@ -124,14 +147,30 @@ export default {
     methods: {
         async init() {
             this.isLoading = true
-            await Promise.all([
-                this.getAdmin(),
-                this.getVerifierContract(),
-                this.updateVotingPhases(),
-                this.getRegisteredAndVotedVoters(),
-            ]);
-            await this.getVerifierKeys();
-            this.isLoading = false
+            this.error = ''
+            try {
+                await this.checkContractOnNetwork();
+                await Promise.all([
+                    this.getAdmin(),
+                    this.getVerifierContract(),
+                    this.updateVotingPhases(),
+                    this.getRegisteredAndVotedVoters(),
+                ]);
+                await this.getVerifierKeys();
+            } catch (error) {
+                this.error = error
+            } finally {
+                this.isLoading = false
+            }
+        },
+        async checkContractOnNetwork(){
+            try {
+                const deposit = await this.eVoteInstance.methods.DEPOSIT().call();
+                this.isCorrectNetwork = deposit > 0;
+            } catch (error) {
+                this.error = error
+                this.isCorrectNetwork = false
+            }
         },
         async getAdmin() {
             const address = await this.eVoteInstance.methods.admin().call();
@@ -152,18 +191,25 @@ export default {
             }
         },
         async updateVotingPhases() {
-            const [currentBlock, finishVotingBlock, finishTallyBlock] = await Promise.all([
+            const [currentBlock, finishRegistartionBlock, finishVotingBlock, finishTallyBlock] = await Promise.all([
                 this.getWeb3().eth.getBlockNumber(),
+                this.eVoteInstance.methods.finishRegistartionBlockNumber().call(),
                 this.eVoteInstance.methods.finishVotingBlockNumber().call(),
                 this.eVoteInstance.methods.finishTallyBlockNumber().call(),
             ]);
             this.currentBlock = currentBlock;
+            this.finishRegistartionBlock = Number(finishRegistartionBlock);
             this.finishVotingBlock = Number(finishVotingBlock);
             this.finishTallyBlock = Number(finishTallyBlock);
         },
         async getRegisteredAndVotedVoters() {
             const nVoters = await this.eVoteInstance.methods.nVoters().call();
             this.nVoters = nVoters;
+            this.registeredVoters = [];
+            this.votingKeysX = [];
+            this.votingKeysY = [];
+            this.votedVoters = [];
+            this.encryptedVotes = [];
             for (let i = 0; i < nVoters; i += 1) {
                 try {
                     const address = await this.eVoteInstance.methods.voters(i).call();
