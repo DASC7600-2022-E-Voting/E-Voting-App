@@ -1,49 +1,98 @@
 <template>
   <div>
-    <div v-if="error">{{ error }}</div>
-    <div v-if="isLoading">Loading...</div>
-    <div>
-      <h2>Voting Status</h2>
-      <div>Voters Expected: {{ nVoters }}</div>
-      <div>Voters Registered: {{ registeredVoters.length }}</div>
-      <div>Voters Voted: {{ votedVoters.length }}</div>
-      <div>Tally Result: {{ voteResultDisplay }}</div>
-    </div>
-    <div v-if="!getAddress">
-      <h2>Voting actions</h2>
+    <h2>Voting Status</h2>
+    <v-card dense class="py-1 pl-4 ma-2">
+      <v-card-text>
+        <div>Voters Expected: {{ nVoters }}</div>
+        <div>Voters Registered: {{ registeredVoters.length }}</div>
+        <div>Voters Voted: {{ votedVoters.length }}</div>
+        <div>Tally Result: {{ voteResultDisplay }}</div>
+      </v-card-text>
+    </v-card>
+
+    <span>For admins: </span><nuxt-link :to="`/vote/${contractAddress}/admin`">go to admin page</nuxt-link>
+  
+    <h2>Voting Actions</h2>
+    <v-alert v-if="!getAddress && !isLoading" type="error" color="red darken-4">
       Please connect your wallet first
-    </div>
-    <div v-else>
-      <h2>Voting actions</h2>
-      <div v-if="!isVoter">You are not voter!</div>
-      <hr />
-      <div>
-        <div>Registration end time: {{ registrationEndTime }}</div>
-        <div v-if="isRegisterPhase">Please Register as voter</div>
-        <div v-else>Is not register phase</div>
-        <v-btn :disabled="!isVoter || !isRegisterPhase || isLoading" @click="onClickRegister">Register</v-btn>
-      </div>
-      <hr />
-      <div>
-        <div>voting end time: {{ votingEndTime }}</div>
-        <div v-if="isVotingPhase">Please Vote</div>
-        <div v-else>Is not voting phase</div>
-        <label>Vote option:</label>
-        <v-text-field v-model="voteOption" type="number" :disabled="!isVoter" />
-        <v-btn :disabled="!isVoter || !isVotingPhase || isLoading" @click="onClickVote">Vote</v-btn>
-      </div>
-      <hr />
-      <div>
-        <div>refund start time: {{ tallyEndTime }}</div>
-        <div v-if="isRefundPhase">Please refund here</div>
-        <div v-else>Is not refund phase</div>
-        <v-btn :disabled="!isVoter || !isRefundPhase || isLoading" @click="onClickRefund">Refund</v-btn>
-      </div>
-    </div>
-    <div>
-      <h2>Admin page</h2>
-      <nuxt-link :to="`/vote/${contractAddress}/admin`">Go to admin link</nuxt-link>
-    </div>
+    </v-alert>
+
+    <v-alert v-else-if="!isVoter && !isLoading" type="error" color="red darken-4">
+      You are not voter. Please connect to a voter account.
+    </v-alert>
+
+    <template v-else>
+      <v-card dense class="py-1 pl-4 ma-2">
+        <v-card-title class="pa-2">Registration</v-card-title>
+        <v-card-text>
+          <div>Registration end time: {{ registrationEndTime }}</div>
+          <div>
+            <template v-if="isRegisterPhase">
+              <div>Please Register as voter</div>
+              <v-btn
+                :disabled="!isVoter || !isRegisterPhase || isLoading"
+                color="green"
+                @click="onClickRegister"
+              >
+                Register
+              </v-btn>
+            </template>
+            <div v-else>It is not register phase currently.</div>
+          </div>
+        </v-card-text>
+      </v-card>
+      <v-card dense class="py-1 pl-4 ma-2">
+        <v-card-title class="pa-2">Vote Casting</v-card-title>
+        <v-card-text>
+          <div>Voting end time: {{ votingEndTime }}</div>
+          <template v-if="isVotingPhase">
+            <div>Please Vote</div>
+            <v-radio-group
+              v-model="voteOption"
+              row dense
+            >
+              <v-radio label="Vote 0" :value="0" />
+              <v-radio label="Vote 1" :value="1" />
+            </v-radio-group>
+            <v-btn
+              :disabled="!isVoter || !isVotingPhase || isLoading || voteOption == null" 
+              color="green"
+              @click="onClickVote"
+            >
+              Vote
+            </v-btn>
+          </template>
+          <div v-else>It is not voting phase currently.</div>
+        </v-card-text>
+      </v-card>
+      <v-card dense class="py-1 pl-4 ma-2">
+        <v-card-title class="pa-2">Refunding</v-card-title>
+        <v-card-text>
+          <div>Refunding start time: {{ tallyEndTime }}</div>
+          <template v-if="isRefundPhase">
+            <div>Please refund here</div>
+            <v-btn
+              :disabled="!isVoter || !isRefundPhase || isLoading"
+              color="green"
+              @click="onClickRefund"
+            >
+              Refund
+            </v-btn>
+          </template>
+          <div v-else>It is not refund phase currently.</div>
+        </v-card-text>
+      </v-card>
+    </template>
+
+    <div v-if="error">{{ error }}</div>
+
+    <v-overlay :value="isLoading">
+      <v-progress-circular
+        indeterminate
+        size="64"
+      ></v-progress-circular>
+    </v-overlay>
+
   </div>
 </template>
 
@@ -80,7 +129,7 @@ export default {
       encryptedVotes: [],
       voteResult: -1,
 
-      voteOption: 0,
+      voteOption: null,
     }
   },
   computed: {
@@ -138,11 +187,19 @@ export default {
   },
   methods: {
     async init() {
-      await Promise.all([
-        this.getRegisteredAndVotedVoters(),
-        this.getTally(),
-        this.updateVotingPhases(),
-      ]);
+      this.isLoading = true
+      this.error = ''
+      try {
+        await Promise.all([
+          this.getRegisteredAndVotedVoters(),
+          this.getTally(),
+          this.updateVotingPhases(),
+        ]);
+      } catch (error) {
+        this.error = error
+      } finally {
+        this.isLoading = false
+      }
     },
     async getTally() {
       try {
@@ -211,8 +268,10 @@ export default {
         const tx = await this.eVoteInstance.methods.register(
           publicKey, publicKeyProof.a, publicKeyProof.b, publicKeyProof.c, this.userMerkleProof,
         ).send({ from: this.getAddress, value: web3.utils.toWei(DEPOSIT_VALUE, "ether") });
+        // eslint-disable-next-line no-console
         console.log(tx);
       } catch (error) {
+        // eslint-disable-next-line no-console
         console.error(error);
         this.error = error;
       } finally {
@@ -236,8 +295,10 @@ export default {
         const tx = await this.eVoteInstance.methods.castVote(
           encryptedVote, Idx, encryptedVoteProof.a, encryptedVoteProof.b, encryptedVoteProof.c,
         ).send({ from: this.getAddress });
+        // eslint-disable-next-line no-console
         console.log(tx);
       } catch (error) {
+        // eslint-disable-next-line no-console
         console.error(error);
         this.error = error;
       } finally {
@@ -248,8 +309,10 @@ export default {
       try {
         this.isLoading = true;
         const tx = await this.eVoteInstance.methods.refund().send({ from: this.getAddress });
+        // eslint-disable-next-line no-console
         console.log(tx);
       } catch (error) {
+        // eslint-disable-next-line no-console
         console.error(error);
         this.error = error;
       } finally {
