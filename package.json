@@ -16,7 +16,7 @@
   "dependencies": {
     "@nuxtjs/axios": "^5.13.6",
     "circomlibjs": "^0.1.7",
-    "core-js": "^3.25.3",
+    "core-js": "^3.27.2",
     "ethereumjs-util": "^5.1.4",
     "ffjavascript": "^0.2.56",
     "firebase": "^9.12.1",
